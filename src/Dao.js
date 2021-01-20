@@ -949,7 +949,7 @@ const Dao = () => {
                       || switchState.switchAll
                       || (item.status === 'Fail' && switchState.switchDone)
                       || (item.status === 'Success' && switchState.switchDone)
-                      || (key > stateCtx.config.lastShownProposal.index && switchState.switchNew)
+                      || (item.key >= stateCtx.config.lastShownProposal.index && switchState.switchNew)
 
                         ?
                         <Proposal data={item} key={key} id={key} council={council} setShowError={setShowError}

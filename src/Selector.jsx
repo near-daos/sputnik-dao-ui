@@ -70,8 +70,9 @@ const DaoInfo = (props) => {
   return (
     <div className="text-left">
       <MDBBox>
-        <span className="text-muted">Bond:</span> {bond !== null ? (new Decimal(bond.toString()).div(yoktoNear)).toString() : ''}NEAR;{" "}
-        <span className="text-muted">Vote Period:</span> {votePeriod ? timestampToReadable(votePeriod): ''};{" "}
+        <span
+          className="text-muted">Bond:</span> {bond !== null ? (new Decimal(bond.toString()).div(yoktoNear)).toString() : ''}NEAR;{" "}
+        <span className="text-muted">Vote Period:</span> {votePeriod ? timestampToReadable(votePeriod) : ''};{" "}
         <span className="text-muted">Purpose:</span> <b>{purpose}</b>
       </MDBBox>
       <MDBCollapseHeader className="text-right p-2 m-0 font-small white" onClick={toggleCollapse}>
@@ -128,6 +129,10 @@ const Selector = () => {
       bond: '',
       purpose: '',
       votePeriod: '',
+      lastShownProposal: {
+        index: 0,
+        when: new Date('2020-04-22')
+      },
     });
     setShowModal(false);
     routerCtx.history.push('/' + e.target.name);
@@ -139,7 +144,7 @@ const Selector = () => {
   }
 
   return (
-    <MDBModal modalStyle="info" className="dark text-white default-color-dark"  size="lg"
+    <MDBModal modalStyle="info" className="dark text-white default-color-dark" size="lg"
               isOpen={showModal} overflowScroll={true}>
       <MDBModalHeader className="text-center" titleClass="w-100" tag="p">
         Please select or change DAO
@@ -154,8 +159,8 @@ const Selector = () => {
                   <DaoInfo item={item}/>
                 </MDBCardBody>
                 <div className="text-right">
-                <MDBBtn name={item} onClick={handleSelect} color="secondary" size="sm"
-                        className="col-md-3">SELECT</MDBBtn>
+                  <MDBBtn name={item} onClick={handleSelect} color="secondary" size="sm"
+                          className="col-md-3">SELECT</MDBBtn>
                 </div>
               </MDBCard>
             )) : ''}
