@@ -69,6 +69,17 @@ export const ContainerProvider = ({children}) => {
         factory: state.config.factory,
         contract: state.config.contract,
         network: state.config.network,
+        filter: {
+          switchAll: state.config.filter.switchAll,
+          switchInProgress: state.config.filter.switchInProgress,
+          switchDone: state.config.filter.switchDone,
+          switchNew: state.config.filter.switchNew,
+          switchExpired: state.config.filter.switchExpired,
+        },
+        lastShownProposal: {
+          index: state.config.lastShownProposal.index,
+          when: state.config.lastShownProposal.when,
+        }
       })
     )
   }, [state])

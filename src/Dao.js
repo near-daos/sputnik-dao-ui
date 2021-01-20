@@ -8,7 +8,7 @@ import {
   MDBView, MDBMask, MDBContainer, MDBCard, MDBCardBody, MDBCardText,
   MDBCardTitle, MDBCardImage, MDBRow, MDBCol, MDBBtn, MDBCardHeader, MDBBadge,
   MDBNotification, MDBModal, MDBModalBody, MDBModalHeader, MDBModalFooter, MDBIcon,
-  MDBInput, MDBBox
+  MDBInput, MDBBox, MDBTooltip
 } from "mdbreact";
 import {useGlobalState, useGlobalMutation} from './utils/container'
 import {Contract} from "near-api-js";
@@ -22,7 +22,6 @@ const Proposal = (props) => {
   const [modalText, setModalText] = useState('');
   const [showSpinner, setShowSpinner] = useState(false);
   const stateCtx = useGlobalState();
-
 
   const vote = async (vote) => {
     try {
@@ -147,48 +146,57 @@ const Proposal = (props) => {
           </MDBCardText>
           {props.council.includes(window.walletConnection.getAccountId()) ?
             <div>
-              <MDBBtn
-                disabled={showSpinner || convertDuration(props.data.vote_period_end) < new Date() || props.data.status !== 'Vote'}
-                onClick={handleVoteYes}
-                color="green darken-1"
-                className='h5-responsive'
-                size="sm">Vote YES
-                <MDBIcon icon='thumbs-up' size="2x" className='white-text ml-2'/>
-                {showSpinner ?
-                  <div className="spinner-border spinner-border-sm ml-2" role="status">
-                    <span className="sr-only">Loading...</span>
-                  </div>
-                  : null}
-              </MDBBtn>
-              {(convertDuration(props.data.vote_period_end) < new Date() && props.data.status === 'Vote') ?
+              <MDBTooltip
+                tag="span"
+                placement="top"
+              >
                 <MDBBtn
-                  disabled={showSpinner}
-                  onClick={handleFinalize}
-                  color="green"
-                  className='h5-responsive float-right'
-                  size="sm">Finalize
-                  <MDBIcon icon="check-circle" size="2x" className='white-text ml-2'/>
-                  {showSpinner ?
-                    <div className="spinner-border spinner-border-sm ml-2" role="status">
-                      <span className="sr-only">Loading...</span>
-                    </div>
-                    : null}
+                  style={{borderRadius: 50}}
+                  disabled={showSpinner || convertDuration(props.data.vote_period_end) < new Date() || props.data.status !== 'Vote'}
+                  onClick={handleVoteYes}
+                  floating
+                  color="green darken-1"
+                  className='h5-responsive'
+                  size="sm">
+                  <MDBIcon icon='thumbs-up' size="2x" className='white-text m-2 p-2'/>
                 </MDBBtn>
+                <span>Vote YES</span>
+              </MDBTooltip>
+              {(convertDuration(props.data.vote_period_end) < new Date() && props.data.status === 'Vote') ?
+                <MDBTooltip
+                  tag="span"
+                  placement="top"
+                >
+                  <MDBBtn
+                    style={{borderRadius: 50}}
+                    disabled={showSpinner}
+                    onClick={handleFinalize}
+                    color="info"
+                    floating
+                    className='h5-responsive float-right'
+                    size="sm">
+                    <MDBIcon icon="check-circle" size="2x" className='white-text m-2 p-2'/>
+                  </MDBBtn>
+                  <span>Finalise</span>
+                </MDBTooltip>
                 : null}
 
-              <MDBBtn
-                disabled={showSpinner || convertDuration(props.data.vote_period_end) < new Date() || props.data.status !== 'Vote'}
-                onClick={handleVoteNo}
-                color="red"
-                className='h5-responsive float-right'
-                size="sm">Vote NO
-                <MDBIcon icon='thumbs-down' size="2x" className='white-text ml-2'/>
-                {showSpinner ?
-                  <div className="spinner-border spinner-border-sm ml-2" role="status">
-                    <span className="sr-only">Loading...</span>
-                  </div>
-                  : null}
-              </MDBBtn>
+              <MDBTooltip
+                tag="span"
+                placement="top"
+              >
+                <MDBBtn
+                  style={{borderRadius: 50}}
+                  disabled={showSpinner || convertDuration(props.data.vote_period_end) < new Date() || props.data.status !== 'Vote'}
+                  onClick={handleVoteNo}
+                  color="red"
+                  floating
+                  className='h5-responsive float-right'
+                  size="sm">
+                  <MDBIcon icon='thumbs-down' size="2x" className='white-text m-2 p-2'/>
+                </MDBBtn>
+                <span>Vote NO</span>
+              </MDBTooltip>
 
             </div>
             : null
@@ -478,6 +486,17 @@ const Dao = () => {
         window.contract.get_num_proposals()
           .then(number => {
             setNumberProposals(number);
+            let d = new Date();
+            d.setHours(d.getHours() - 2);
+            if (stateCtx.config.lastShownProposal.index === 0 || stateCtx.config.lastShownProposal.when < d) {
+              mutationCtx.updateConfig({
+                  lastShownProposal: {
+                    index: number,
+                    when: new Date(),
+                  },
+                }
+              )
+            }
             window.contract.get_proposals({from_index: 0, limit: number})
               .then(list => {
                 const t = []
@@ -690,7 +709,83 @@ const Dao = () => {
     }
   };
 
-  console.log(proposals);
+  const [switchState, setSwitchState] = useState({
+    switchAll: stateCtx.config.filter.switchAll,
+    switchInProgress: stateCtx.config.filter.switchInProgress,
+    switchDone: stateCtx.config.filter.switchDone,
+    switchNew: stateCtx.config.filter.switchNew,
+    switchExpired: stateCtx.config.filter.switchExpired,
+  });
+
+  const handleSwitchChange = switchName => () => {
+    console.log(switchName)
+    let switched = {}
+    switch (switchName) {
+      case 'switchAll':
+        switched = {
+          switchAll: !switchState.switchAll,
+          switchInProgress: false,
+          switchDone: false,
+          switchNew: false,
+          switchExpired: false,
+        }
+        break;
+
+      case 'switchInProgress':
+        switched = {
+          switchAll: false,
+          switchInProgress: !switchState.switchInProgress,
+          switchDone: switchState.switchDone,
+          switchNew: false,
+          switchExpired: false,
+        }
+        break;
+
+      case 'switchDone':
+        switched = {
+          switchAll: false,
+          switchInProgress: switchState.switchInProgress,
+          switchDone: !switchState.switchDone,
+          switchNew: false,
+          switchExpired: false,
+        }
+        break;
+
+      case 'switchNew':
+        switched = {
+          switchAll: false,
+          switchInProgress: false,
+          switchDone: false,
+          switchNew: !switchState.switchNew,
+          switchExpired: false,
+        }
+        break;
+
+      case 'switchExpired':
+        switched = {
+          switchAll: false,
+          switchInProgress: false,
+          switchDone: false,
+          switchNew: false,
+          switchExpired: !switchState.switchExpired,
+        }
+        break;
+
+      default:
+        switched = {
+          switchAll: true,
+          switchInProgress: false,
+          switchDone: false,
+          switchNew: false,
+        }
+        break;
+
+
+    }
+    setSwitchState(switched);
+    mutationCtx.updateConfig({filter: switched})
+  }
+
 
   return (
     <MDBView className="w-100 h-100" style={{minHeight: "100vh"}}>
@@ -747,7 +842,8 @@ const Dao = () => {
                     {window.walletConnection.getAccountId() ?
                       <MDBRow className="mx-auto p-2">
                         <MDBCol className="text-center">
-                          <MDBBtn size="sm" onClick={toggleProposalModal} color="unique">ADD NEW PROPOSAL</MDBBtn>
+                          <MDBBtn style={{borderRadius: 10}} size="sm" onClick={toggleProposalModal} color="unique">ADD
+                            NEW PROPOSAL</MDBBtn>
                         </MDBCol>
                       </MDBRow>
                       : null}
@@ -756,12 +852,114 @@ const Dao = () => {
               </MDBCol>
             </MDBRow>
 
+            <MDBRow>
+              <MDBCol className="col-12 p-3 mx-auto">
+                <MDBCard>
+                  <MDBCardBody>
+                    <MDBRow center>
+                      <MDBCard className="p-2 mr-2 mb-2 green lighten-5">
+                        <div className='custom-control custom-switch mr-2'>
+                          <input
+                            type='checkbox'
+                            className='custom-control-input'
+                            id='switchAll'
+                            checked={switchState.switchAll}
+                            onChange={handleSwitchChange('switchAll')}
+                            readOnly
+                          />
+                          <label className='custom-control-label' htmlFor='switchAll'>
+                            Show All
+                          </label>
+                        </div>
+                      </MDBCard>
+                      <MDBCard className="p-2 mr-2 mb-2">
+                        <div className='custom-control custom-switch mr-2'>
+                          <input
+                            type='checkbox'
+                            className='custom-control-input'
+                            id='switchInProgress'
+                            checked={switchState.switchInProgress}
+                            onChange={handleSwitchChange('switchInProgress')}
+                            readOnly
+                          />
+                          <label className='custom-control-label' htmlFor='switchInProgress'>
+                            In Progress
+                          </label>
+                        </div>
+                      </MDBCard>
+                      <MDBCard className="p-2 mr-2 mb-2">
+                        <div className='custom-control custom-switch mr-2'>
+                          <input
+                            type='checkbox'
+                            className='custom-control-input'
+                            id='switchDone'
+                            checked={switchState.switchDone}
+                            onChange={handleSwitchChange('switchDone')}
+                            readOnly
+                          />
+                          <label className='custom-control-label' htmlFor='switchDone'>
+                            Done
+                          </label>
+                        </div>
+                      </MDBCard>
+                      <MDBCard className="p-2 mb-2 mr-2">
+                        <div className='custom-control custom-switch mr-2'>
+                          <input
+                            type='checkbox'
+                            className='custom-control-input'
+                            id='switchNew'
+                            checked={switchState.switchNew}
+                            onChange={handleSwitchChange('switchNew')}
+                            readOnly
+                          />
+                          <label className='custom-control-label' htmlFor='switchNew'>
+                            New
+                          </label>
+                        </div>
+                      </MDBCard>
+                      <MDBCard className="p-2 mb-2">
+                        <div className='custom-control custom-switch mr-2'>
+                          <input
+                            type='checkbox'
+                            className='custom-control-input'
+                            id='switchExpired'
+                            checked={switchState.switchExpired}
+                            onChange={handleSwitchChange('switchExpired')}
+                            readOnly
+                          />
+                          <label className='custom-control-label' htmlFor='switchExpired'>
+                            Expired
+                          </label>
+                        </div>
+                      </MDBCard>
+
+                    </MDBRow>
+                  </MDBCardBody>
+                </MDBCard>
+              </MDBCol>
+            </MDBRow>
+
             <MDBRow className="">
               {numberProposals > 0 && proposals !== null ?
                 proposals.sort((a, b) => b.key >= a.key ? 1 : -1).map((item, key) => (
-                  <Proposal data={item} key={key} id={key} council={council} setShowError={setShowError}/>
+                  <>
+                    {
+                      (convertDuration(item.vote_period_end) > new Date() && item.status === 'Vote' && switchState.switchInProgress)
+                      || (convertDuration(item.vote_period_end) < new Date() && item.status === 'Vote' && switchState.switchExpired)
+                      || switchState.switchAll
+                      || (item.status === 'Fail' && switchState.switchDone)
+                      || (item.status === 'Success' && switchState.switchDone)
+                      || (key > stateCtx.config.lastShownProposal.index && switchState.switchNew)
+
+                        ?
+                        <Proposal data={item} key={key} id={key} council={council} setShowError={setShowError}
+                                  switchState={switchState}/>
+                        : null
+                    }
+                  </>
                 ))
-                : null}
+                : null
+              }
             </MDBRow>
             {showError !== null ?
               <MDBNotification
@@ -850,9 +1048,10 @@ const Dao = () => {
                     name="bondAmount" disabled group/>
                 </MDBModalBody>
                 <MDBModalFooter className="justify-content-center">
-                  <MDBBox className="font-small">For more details on your proposal or to start the discussion, please post in <a
-                    href="https://gov.near.org/c/community/10"
-                    target="_blank">https://gov.near.org/c/community/10</a>
+                  <MDBBox className="font-small">For more details on your proposal or to start the discussion, please
+                    post in <a
+                      href="https://gov.near.org/c/community/10"
+                      target="_blank">https://gov.near.org/c/community/10</a>
                   </MDBBox>
                   <MDBBtn color="unique" type="submit">
                     Submit
