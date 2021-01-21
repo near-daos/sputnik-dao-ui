@@ -71,6 +71,7 @@ const Proposal = (props) => {
     });
   }
 
+
   return (
     <MDBCol className="col-12 col-sm-8 col-lg-6 mx-auto">
       <MDBCard className="mb-5">
@@ -144,63 +145,64 @@ const Proposal = (props) => {
             </MDBBox>
             <div className="clearfix"/>
           </MDBCardText>
+
           {props.council.includes(window.walletConnection.getAccountId()) ?
-            <div>
-              <MDBTooltip
-                tag="span"
-                placement="top"
-              >
-                <MDBBtn
-                  style={{borderRadius: 50}}
-                  disabled={showSpinner || convertDuration(props.data.vote_period_end) < new Date() || props.data.status !== 'Vote'}
-                  onClick={handleVoteYes}
-                  floating
-                  color="green darken-1"
-                  className='h5-responsive'
-                  size="sm">
-                  <MDBIcon icon='thumbs-up' size="2x" className='white-text m-2 p-2'/>
-                </MDBBtn>
-                <span>Vote YES</span>
-              </MDBTooltip>
-              {(convertDuration(props.data.vote_period_end) < new Date() && props.data.status === 'Vote') ?
-                <MDBTooltip
-                  tag="span"
-                  placement="top"
-                >
-                  <MDBBtn
-                    style={{borderRadius: 50}}
-                    disabled={showSpinner}
-                    onClick={handleFinalize}
-                    color="info"
-                    floating
-                    className='h5-responsive float-right'
-                    size="sm">
-                    <MDBIcon icon="check-circle" size="2x" className='white-text m-2 p-2'/>
-                  </MDBBtn>
-                  <span>Finalise</span>
-                </MDBTooltip>
-                : null}
+            <MDBTooltip
+              tag="span"
+              placement="top"
+            >
+              <MDBBtn
+                style={{borderRadius: 50}}
+                disabled={showSpinner || convertDuration(props.data.vote_period_end) < new Date() || props.data.status !== 'Vote'}
+                onClick={handleVoteYes}
+                floating
+                color="green darken-1"
+                className='h5-responsive'
+                size="sm">
+                <MDBIcon icon='thumbs-up' size="2x" className='white-text m-2 p-2'/>
+              </MDBBtn>
+              <span>Vote YES</span>
+            </MDBTooltip>
+            : null}
 
-              <MDBTooltip
-                tag="span"
-                placement="top"
-              >
-                <MDBBtn
-                  style={{borderRadius: 50}}
-                  disabled={showSpinner || convertDuration(props.data.vote_period_end) < new Date() || props.data.status !== 'Vote'}
-                  onClick={handleVoteNo}
-                  color="red"
-                  floating
-                  className='h5-responsive float-right'
-                  size="sm">
-                  <MDBIcon icon='thumbs-down' size="2x" className='white-text m-2 p-2'/>
-                </MDBBtn>
-                <span>Vote NO</span>
-              </MDBTooltip>
+          {(props.data.proposer === window.walletConnection.getAccountId() && convertDuration(props.data.vote_period_end) < new Date() && props.data.status === 'Vote') ?
+            <MDBTooltip
+              tag="span"
+              placement="top"
+            >
+              <MDBBtn
+                style={{borderRadius: 50}}
+                disabled={showSpinner}
+                onClick={handleFinalize}
+                color="info"
+                floating
+                className='h5-responsive float-right'
+                size="sm">
+                <MDBIcon icon="check-circle" size="2x" className='white-text m-2 p-2'/>
+              </MDBBtn>
+              <span>Finalise</span>
+            </MDBTooltip>
+            : null}
 
-            </div>
-            : null
-          }
+          {props.council.includes(window.walletConnection.getAccountId()) ?
+            <MDBTooltip
+              tag="span"
+              placement="top"
+            >
+              <MDBBtn
+                style={{borderRadius: 50}}
+                disabled={showSpinner || convertDuration(props.data.vote_period_end) < new Date() || props.data.status !== 'Vote'}
+                onClick={handleVoteNo}
+                color="red"
+                floating
+                className='h5-responsive float-right'
+                size="sm">
+                <MDBIcon icon='thumbs-down' size="2x" className='white-text m-2 p-2'/>
+              </MDBBtn>
+              <span>Vote NO</span>
+            </MDBTooltip>
+            : null}
+
         </MDBCardBody>
         <div className='rounded-bottom mdb-color lighten-3 text-center pt-3 pl-5 pr-5'>
           <ul className='list-unstyled list-inline font-small'>
