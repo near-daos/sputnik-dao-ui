@@ -1176,7 +1176,7 @@ const Dao = () => {
           </>
           : null}
         {selectDao ?
-          <Selector/>
+          <Selector setFirstRun={setFirstRun}/>
           : null
         }
       </MDBContainer>

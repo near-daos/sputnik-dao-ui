@@ -79,7 +79,7 @@ const DaoInfo = (props) => {
         view council{" "}
         <i className={collapseState ? "fa fa-angle-down rotate-icon" : "fa fa-angle-down"}/>
       </MDBCollapseHeader>
-      <MDBCollapse className="p-0 m-0 mb-2" isOpen={collapseState}>
+      <MDBCollapse className="p-0 m-0 mb-2 border-light" isOpen={collapseState}>
         <MDBListGroup className="text-left">
           {council.map((item, key) => <MDBListGroupItem className="p-1" key={key}>{item}</MDBListGroupItem>)}
         </MDBListGroup>
@@ -88,7 +88,7 @@ const DaoInfo = (props) => {
   );
 }
 
-const Selector = () => {
+const Selector = (props) => {
   const routerCtx = useRouter()
   const stateCtx = useGlobalState()
   const mutationCtx = useGlobalMutation()
@@ -135,6 +135,7 @@ const Selector = () => {
       },
     });
     setShowModal(false);
+    props.setFirstRun(true);
     routerCtx.history.push('/' + e.target.name);
     return false;
   }
@@ -150,22 +151,19 @@ const Selector = () => {
         Please select or change DAO
       </MDBModalHeader>
       <MDBModalBody className="text-center">
-        <MDBCard className="">
-          <MDBCardBody className="p-4">
             {daoList ? daoList.map((item, key) => (
               <MDBCard className="m-2" key={key}>
                 <MDBCardHeader color="white-text unique-color" className="h5-responsive">{item}</MDBCardHeader>
                 <MDBCardBody>
                   <DaoInfo item={item}/>
                 </MDBCardBody>
-                <div className="text-right">
+                <div className="">
                   <MDBBtn name={item} onClick={handleSelect} color="secondary" size="sm"
-                          className="col-md-3">SELECT</MDBBtn>
+                          className="float-right">SELECT 2</MDBBtn>
                 </div>
               </MDBCard>
             )) : ''}
-          </MDBCardBody>
-        </MDBCard> </MDBModalBody>
+      </MDBModalBody>
       <MDBModalFooter className="justify-content-center">
       </MDBModalFooter>
     </MDBModal>
