@@ -8,13 +8,13 @@ import {
   MDBView, MDBMask, MDBContainer, MDBCard, MDBCardBody, MDBCardText,
   MDBCardTitle, MDBCardImage, MDBRow, MDBCol, MDBBtn, MDBCardHeader, MDBBadge,
   MDBNotification, MDBModal, MDBModalBody, MDBModalHeader, MDBModalFooter, MDBIcon,
-  MDBInput, MDBBox, MDBTooltip
+  MDBInput, MDBBox, MDBTooltip, MDBPopover, MDBPopoverBody
 } from "mdbreact";
 import {useGlobalState, useGlobalMutation} from './utils/container'
 import {Contract} from "near-api-js";
 import {Decimal} from 'decimal.js';
 import Selector from "./Selector";
-import {timestampToReadable, convertDuration, yoktoNear} from './utils/funcs'
+import {timestampToReadable, convertDuration, yoktoNear, proposalsReload} from './utils/funcs'
 
 
 const Proposal = (props) => {
@@ -22,6 +22,7 @@ const Proposal = (props) => {
   const [modalText, setModalText] = useState('');
   const [showSpinner, setShowSpinner] = useState(false);
   const stateCtx = useGlobalState();
+  const [votedWarning, setVotedWarning] = useState(false);
 
   const vote = async (vote) => {
     try {
@@ -53,16 +54,24 @@ const Proposal = (props) => {
   }
 
   const handleVoteYes = () => {
-    vote('Yes').then().catch((e) => {
-      console.log(e);
-    });
 
+    if (props.data.votes[window.walletConnection.getAccountId()] === undefined) {
+      vote('Yes').then().catch((e) => {
+        console.log(e);
+      });
+    } else {
+      setVotedWarning(true);
+    }
   }
 
   const handleVoteNo = () => {
-    vote('No').then().catch((e) => {
-      console.log(e);
-    });
+    if (props.data.votes[window.walletConnection.getAccountId()] === undefined) {
+      vote('No').then().catch((e) => {
+        console.log(e);
+      });
+    } else {
+      setVotedWarning(true);
+    }
   }
 
   const handleFinalize = () => {
@@ -71,9 +80,24 @@ const Proposal = (props) => {
     });
   }
 
+  const toggleVoteWarningOff = () => {
+    setVotedWarning(false);
+  }
+
 
   return (
     <MDBCol className="col-12 col-sm-8 col-lg-6 mx-auto">
+
+      <MDBModal modalStyle="danger" centered size="sm" isOpen={votedWarning} toggle={toggleVoteWarningOff}>
+        <MDBModalHeader>Warning!</MDBModalHeader>
+        <MDBModalBody className="text-center">
+          You are already voted
+        </MDBModalBody>
+        <MDBModalFooter>
+          <MDBBtn className="w-100" color="info" onClick={toggleVoteWarningOff}>Close</MDBBtn>
+        </MDBModalFooter>
+      </MDBModal>
+
       <MDBCard className="mb-5">
         <MDBCardHeader className="text-center h4-responsive">
           {props.data.kind.type === 'ChangePurpose' ? "Change DAO Purpose: " + props.data.kind.purpose : null}
@@ -210,13 +234,81 @@ const Proposal = (props) => {
               <MDBIcon far
                        icon='clock'/>{" "}{convertDuration(props.data.vote_period_end).toLocaleDateString()} {convertDuration(props.data.vote_period_end).toLocaleTimeString()}
             </li>
+
             <li className='list-inline-item pr-2'>
-              <MDBIcon icon='thumbs-up' size="2x" className='lime-text mr-1'/>
-              <span className="white-text h3-responsive">{props.data.vote_yes}</span>
+              <div>
+                {props.data.votes !== undefined && Object.keys(props.data.votes).length !== 0 && Object.values(props.data.votes).includes('Yes') ?
+                  <MDBPopover
+                    placement="top"
+                    popover
+                    clickable
+                    domElement='div'
+                    id="popover1"
+                  >
+                    <div className="d-inline-block">
+                      <MDBIcon icon='thumbs-up' size="2x" className='lime-text mr-1'/>
+                    </div>
+                    <div>
+                      <MDBPopoverBody>
+                        <div className="h4-responsive">
+                          {
+                            Object.keys(props.data.votes).map((item, key) => (
+                              <>
+                                {props.data.votes[item] === 'Yes' ?
+                                  <li key={key}>{item}</li>
+                                  : null
+                                }
+                              </>
+                            ))
+
+                          }
+                        </div>
+                      </MDBPopoverBody>
+                    </div>
+                  </MDBPopover>
+                  :
+                  <MDBIcon icon='thumbs-up' size="2x" className='lime-text mr-1'/>
+                }
+                <span className="white-text h3-responsive">{props.data.vote_yes}</span>
+              </div>
             </li>
+
             <li className='list-inline-item pr-2'>
-              <MDBIcon icon='thumbs-down' size="2x" className='amber-text mr-1'/>
-              <span className="white-text h3-responsive">{props.data.vote_no}</span>
+              <div>
+                {props.data.votes !== undefined && Object.keys(props.data.votes).length !== 0 && Object.values(props.data.votes).includes('No') ?
+                  <MDBPopover
+                    placement="top"
+                    popover
+                    clickable
+                    domElement='div'
+                    id="popover1"
+                  >
+                    <div className="d-inline-block">
+                      <MDBIcon icon='thumbs-down' size="2x" className='amber-text mr-1'/>
+                    </div>
+                    <div>
+                      <MDBPopoverBody>
+                        <div className="h4-responsive">
+                          {
+                            Object.keys(props.data.votes).map((item, key) => (
+                              <>
+                                {props.data.votes[item] === 'No' ?
+                                  <li key={key}>{item}</li>
+                                  : null
+                                }
+                              </>
+                            ))
+
+                          }
+                        </div>
+                      </MDBPopoverBody>
+                    </div>
+                  </MDBPopover>
+                  :
+                  <MDBIcon icon='thumbs-down' size="2x" className='amber-text mr-1'/>
+                }
+                <span className="white-text h3-responsive">{props.data.vote_no}</span>
+              </div>
             </li>
           </ul>
         </div>
@@ -481,41 +573,57 @@ const Dao = () => {
 
   }
 
+  const [firstRun, setFirstRun] = useState(true);
+
+  const getProposals = () => {
+    if (stateCtx.config.contract !== "") {
+      window.contract.get_num_proposals()
+        .then(number => {
+          setNumberProposals(number);
+          let d = new Date();
+          d.setHours(d.getHours() - 2);
+
+          if (stateCtx.config.lastShownProposal.index === 0 || new Date(stateCtx.config.lastShownProposal.when) < new Date(d)) {
+            mutationCtx.updateConfig({
+                lastShownProposal: {
+                  index: number,
+                  when: new Date(),
+                },
+              }
+            )
+          }
+
+          window.contract.get_proposals({from_index: 0, limit: number})
+            .then(list => {
+              const t = []
+              list.map((item, key) => {
+                const t2 = {}
+                Object.assign(t2, {key: key}, item);
+                t.push(t2);
+              })
+              setProposals(t);
+            });
+        }).catch((e) => {
+        console.log(e);
+        setShowError(e);
+      })
+    }
+  }
 
   useEffect(
     () => {
-      if (stateCtx.config.contract !== "") {
-        window.contract.get_num_proposals()
-          .then(number => {
-            setNumberProposals(number);
-            let d = new Date();
-            d.setHours(d.getHours() - 2);
-            if (stateCtx.config.lastShownProposal.index === 0 || stateCtx.config.lastShownProposal.when < d) {
-              mutationCtx.updateConfig({
-                  lastShownProposal: {
-                    index: number,
-                    when: new Date(),
-                  },
-                }
-              )
-            }
-            window.contract.get_proposals({from_index: 0, limit: number})
-              .then(list => {
-                const t = []
-                list.map((item, key) => {
-                  const t2 = {}
-                  Object.assign(t2, {key: key}, item);
-                  t.push(t2);
-                })
-                setProposals(t);
-              });
-          }).catch((e) => {
-          console.log(e);
-          setShowError(e);
-        })
+      if (!firstRun) {
+        const interval = setInterval(() => {
+          console.log('loading proposals')
+          getProposals();
+        }, proposalsReload);
+        return () => clearInterval(interval);
+      } else {
+        getProposals();
+        setFirstRun(false);
       }
     },
-    [stateCtx.config.contract]
+    [stateCtx.config.contract, firstRun]
   )
 
 
@@ -720,7 +828,6 @@ const Dao = () => {
   });
 
   const handleSwitchChange = switchName => () => {
-    console.log(switchName)
     let switched = {}
     switch (switchName) {
       case 'switchAll':
@@ -951,7 +1058,7 @@ const Dao = () => {
                       || switchState.switchAll
                       || (item.status === 'Fail' && switchState.switchDone)
                       || (item.status === 'Success' && switchState.switchDone)
-                      || (item.key >= stateCtx.config.lastShownProposal.index && switchState.switchNew)
+                      || (item.status === 'Vote' && item.key >= stateCtx.config.lastShownProposal.index && switchState.switchNew)
 
                         ?
                         <Proposal data={item} key={key} id={key} council={council} setShowError={setShowError}
@@ -1080,4 +1187,3 @@ const Dao = () => {
 }
 
 export default Dao;
-

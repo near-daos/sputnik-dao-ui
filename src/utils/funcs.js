@@ -1,4 +1,5 @@
 export const yoktoNear = 1000000000000000000000000;
+export const proposalsReload = 600000;
 
 export const timestampToReadable = (timestamp) => {
   let seconds = Math.floor(timestamp / 1e9);

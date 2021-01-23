@@ -1,5 +1,5 @@
-near-sputnik-dao
+sputnik-dao-ui
 ==================
 
 coming soon....
-.......
+
