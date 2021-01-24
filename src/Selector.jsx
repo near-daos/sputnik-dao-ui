@@ -159,7 +159,7 @@ const Selector = (props) => {
                 </MDBCardBody>
                 <div className="">
                   <MDBBtn name={item} onClick={handleSelect} color="secondary" size="sm"
-                          className="float-right">SELECT 2</MDBBtn>
+                          className="float-right">SELECT</MDBBtn>
                 </div>
               </MDBCard>
             )) : ''}
