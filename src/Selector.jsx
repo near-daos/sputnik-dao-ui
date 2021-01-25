@@ -8,18 +8,20 @@ import {
   MDBCardBody,
   MDBCardHeader,
   MDBCollapse,
-  MDBCollapseHeader,
+  MDBCollapseHeader, MDBContainer,
   MDBListGroup,
-  MDBListGroupItem,
+  MDBListGroupItem, MDBMask,
   MDBModal,
   MDBModalBody,
   MDBModalFooter,
-  MDBModalHeader
+  MDBModalHeader, MDBView
 } from "mdbreact";
 import {useGlobalMutation, useGlobalState} from './utils/container'
 import useRouter from "./utils/use-router";
 import {Decimal} from "decimal.js";
 import {timestampToReadable, yoktoNear} from './utils/funcs'
+import Navbar from "./Navbar";
+import Footer from "./Footer";
 
 
 const DaoInfo = (props) => {
@@ -93,29 +95,15 @@ const Selector = (props) => {
   const stateCtx = useGlobalState()
   const mutationCtx = useGlobalMutation()
   const [daoList, setDaoList] = useState([]);
-  //const [daoInfo, setDaoInfo] = useState({});
-  const [showModal, setShowModal] = useState(false);
-
-  useEffect(
-    () => {
-      if (stateCtx.config.contract === "") {
-        setShowModal(true);
-      }
-
-    },
-    [stateCtx.config.contract]
-  );
 
   useEffect(
     () => {
       window.factoryContract.get_dao_list()
         .then(r => {
           setDaoList(r);
-          setShowModal(true);
         }).catch((e) => {
         console.log(e);
         mutationCtx.toastError(e);
-        setShowModal(false);
       })
     },
     []
@@ -123,7 +111,6 @@ const Selector = (props) => {
 
   const handleSelect = async (e) => {
     e.preventDefault();
-
     mutationCtx.updateConfig({
       contract: e.target.name,
       bond: '',
@@ -131,42 +118,38 @@ const Selector = (props) => {
       votePeriod: '',
       lastShownProposal: {
         index: 0,
-        when: new Date('2020-04-22')
+        when: new Date()
       },
+      lastJsonData: 0,
     });
-    setShowModal(false);
-    props.setFirstRun(true);
+    props.setSelectDao(false);
     routerCtx.history.push('/' + e.target.name);
+    window.location.reload();
     return false;
   }
 
-  const toggleModal = () => {
-    setShowModal(!showModal);
-  }
 
   return (
-    <MDBModal modalStyle="info" className="dark text-white default-color-dark" size="lg"
-              isOpen={showModal} overflowScroll={true}>
-      <MDBModalHeader className="text-center" titleClass="w-100" tag="p">
+    <MDBCard className="p-3 m-3">
+      <MDBCardHeader className="text-center" titleClass="w-100" tag="p">
         Please select or change DAO
-      </MDBModalHeader>
-      <MDBModalBody className="text-center">
-            {daoList ? daoList.map((item, key) => (
-              <MDBCard className="m-2" key={key}>
-                <MDBCardHeader color="white-text unique-color" className="h5-responsive">{item}</MDBCardHeader>
-                <MDBCardBody>
-                  <DaoInfo item={item}/>
-                </MDBCardBody>
-                <div className="">
-                  <MDBBtn name={item} onClick={handleSelect} color="secondary" size="sm"
-                          className="float-right">SELECT</MDBBtn>
-                </div>
-              </MDBCard>
-            )) : ''}
-      </MDBModalBody>
-      <MDBModalFooter className="justify-content-center">
-      </MDBModalFooter>
-    </MDBModal>
+      </MDBCardHeader>
+      <MDBCardBody className="text-center">
+        {daoList ? daoList.map((item, key) => (
+          <MDBCard className="m-2" key={key}>
+            <MDBCardHeader color="white-text unique-color" className="h5-responsive">{item}</MDBCardHeader>
+            <MDBCardBody>
+              <DaoInfo item={item}/>
+            </MDBCardBody>
+            <div className="">
+              <MDBBtn name={item} onClick={handleSelect} color="secondary" size="sm"
+                      className="float-right">SELECT</MDBBtn>
+            </div>
+          </MDBCard>
+        )) : ''}
+      </MDBCardBody>
+    </MDBCard>
+
   )
 }
 

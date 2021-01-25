@@ -79,7 +79,8 @@ export const ContainerProvider = ({children}) => {
         lastShownProposal: {
           index: state.config.lastShownProposal.index,
           when: state.config.lastShownProposal.when,
-        }
+        },
+        lastJsonData: state.config.lastJsonData,
       })
     )
   }, [state])

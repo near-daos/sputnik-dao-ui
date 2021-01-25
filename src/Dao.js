@@ -14,7 +14,7 @@ import {useGlobalState, useGlobalMutation} from './utils/container'
 import {Contract} from "near-api-js";
 import {Decimal} from 'decimal.js';
 import Selector from "./Selector";
-import {timestampToReadable, convertDuration, yoktoNear, proposalsReload} from './utils/funcs'
+import {timestampToReadable, convertDuration, yoktoNear, proposalsReload, updatesJsonUrl} from './utils/funcs'
 
 
 const Proposal = (props) => {
@@ -342,16 +342,7 @@ const Dao = () => {
   const stateCtx = useGlobalState()
   const mutationCtx = useGlobalMutation()
   const [selectDao, setSelectDao] = useState(false);
-
   let {dao} = useParams();
-  if (dao !== undefined && stateCtx.config.contract === "") {
-    mutationCtx.updateConfig({
-      contract: dao,
-    })
-    /* TODO: re-do without reload */
-    window.location.reload();
-  }
-
 
   const [proposalKind, setProposalKind] = useState({
     value: "",
@@ -384,11 +375,17 @@ const Dao = () => {
     message: "",
   });
 
-
   useEffect(
     () => {
+      console.log('called', stateCtx.config.contract)
       if (stateCtx.config.contract === "") {
-        setSelectDao(true);
+        if (dao !== undefined) {
+          mutationCtx.updateConfig({
+            contract: dao,
+          })
+        } else {
+          setSelectDao(true);
+        }
       } else {
         window.contract = new Contract(window.walletConnection.account(), stateCtx.config.contract, {
           viewMethods: ['get_council', 'get_bond', 'get_proposal', 'get_num_proposals', 'get_proposals', 'get_vote_period', 'get_purpose'],
@@ -482,10 +479,8 @@ const Dao = () => {
         } catch (e) {
           console.log(e);
           setShowError(e);
-          setAddProposalModal(false);
         } finally {
           setShowSpinner(false);
-          setAddProposalModal(false);
         }
       }
     }
@@ -508,10 +503,8 @@ const Dao = () => {
         } catch (e) {
           console.log(e);
           setShowError(e);
-          setAddProposalModal(false);
         } finally {
           setShowSpinner(false);
-          setAddProposalModal(false);
         }
       }
     }
@@ -534,10 +527,8 @@ const Dao = () => {
         } catch (e) {
           console.log(e);
           setShowError(e);
-          setAddProposalModal(false);
         } finally {
           setShowSpinner(false);
-          setAddProposalModal(false);
         }
       }
     }
@@ -562,10 +553,8 @@ const Dao = () => {
         } catch (e) {
           console.log(e);
           setShowError(e);
-          setAddProposalModal(false);
         } finally {
           setShowSpinner(false);
-          setAddProposalModal(false);
         }
       }
     }
@@ -583,7 +572,7 @@ const Dao = () => {
           let d = new Date();
           d.setHours(d.getHours() - 2);
 
-          if (stateCtx.config.lastShownProposal.index === 0 || new Date(stateCtx.config.lastShownProposal.when) < new Date(d)) {
+          if (stateCtx.config.lastShownProposal.index === 0) {
             mutationCtx.updateConfig({
                 lastShownProposal: {
                   index: number,
@@ -602,6 +591,7 @@ const Dao = () => {
                 t.push(t2);
               })
               setProposals(t);
+              console.log('Proposals Reloaded')
             });
         }).catch((e) => {
         console.log(e);
@@ -609,6 +599,37 @@ const Dao = () => {
       })
     }
   }
+
+  /*
+  async function fetchUrl() {
+    const sputnikDao = stateCtx.config.contract;
+    const response = await fetch(updatesJsonUrl);
+    const json = await response.json();
+    console.log(json[sputnikDao]);
+    return json[sputnikDao];
+  }
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchUrl().then((json) => {
+        if (stateCtx.config.lastJsonData === 0 || stateCtx.config.lastJsonData !== json)
+          mutationCtx.updateConfig({
+            lastJsonData: json !== undefined ? json : 0,
+          })
+      }).catch((e) => {
+        console.log(e);
+      });
+    }, proposalsReload);
+  }, []);
+
+  useEffect(
+    () => {
+      getProposals();
+    },
+    [stateCtx.config.contract, stateCtx.config.lastJsonData]
+  )
+  */
+
 
   useEffect(
     () => {
@@ -686,8 +707,6 @@ const Dao = () => {
       contract: '',
     })
     routerCtx.history.push('/')
-    /* TODO: Modal no-scroll workaround */
-    window.location.reload();
   }
 
   const validateString = (field, name, showMessage) => {
@@ -901,7 +920,7 @@ const Dao = () => {
       <MDBMask className="d-flex justify-content-center grey lighten-2 align-items-center gradient"/>
       <Navbar/>
       <MDBContainer style={{minHeight: "100vh"}} className="">
-        {stateCtx.config.contract ?
+        {stateCtx.config.contract && !selectDao ?
           <>
             <MDBRow>
               <MDBCol className="col-12 p-3 mx-auto">
@@ -1176,7 +1195,7 @@ const Dao = () => {
           </>
           : null}
         {selectDao ?
-          <Selector setFirstRun={setFirstRun}/>
+          <Selector setSelectDao={setSelectDao}/>
           : null
         }
       </MDBContainer>

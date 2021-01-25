@@ -25,6 +25,7 @@ const defaultState = {
       index: 0,
       when: new Date('2020-04-22')
     },
+    lastJsonData: 0,
     ...readDefaultState(),
   }
 }
