@@ -379,7 +379,6 @@ const Dao = () => {
 
   useEffect(
     () => {
-      console.log('called', stateCtx.config.contract)
       if (stateCtx.config.contract === "") {
         if (dao !== undefined) {
           mutationCtx.updateConfig({
@@ -583,7 +582,6 @@ const Dao = () => {
                 t.push(t2);
               })
               setProposals(t);
-              console.log('Proposals Reloaded')
             });
         }).catch((e) => {
         console.log(e);
@@ -597,7 +595,6 @@ const Dao = () => {
     const sputnikDao = stateCtx.config.contract;
     const response = await fetch(updatesJsonUrl + Math.floor(Math.random() * 10000) + 1);
     const json = await response.json();
-    console.log(json[sputnikDao]);
     return json[sputnikDao];
   }
 
@@ -624,7 +621,6 @@ const Dao = () => {
   useEffect(
     () => {
       getProposals();
-      console.log(numberProposals);
       /*
       if (stateCtx.config.lastJsonData !== 0 && stateCtx.config.lastShownProposal < numberProposals) {
         setShowNewProposalNotification(true);
