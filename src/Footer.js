@@ -35,9 +35,9 @@ const Footer = () => {
         <MDBRow className="d-flex align-items-center">
           <MDBCol size="12">
             <p className="text-center black-text">
-              <a className="black-text" href="/">SputnikDAO</a> &copy; {new Date().getFullYear()} Copyright.<br/>
-              All Rights Reserved.
-            </p>
+              <a className="black-text" href="/">SputnikDAO</a> {new Date().getFullYear()}. The software is an <a
+              className="blue-text" target="_blank" rel="nofollow" href="https://github.com/near-daos/sputnik-dao-ui">open
+              source</a> and provided “as is”, without warranty of any kind.</p>
           </MDBCol>
         </MDBRow>
       </MDBContainer>

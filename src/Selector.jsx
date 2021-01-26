@@ -116,10 +116,7 @@ const Selector = (props) => {
       bond: '',
       purpose: '',
       votePeriod: '',
-      lastShownProposal: {
-        index: 0,
-        when: new Date()
-      },
+      lastShownProposal: 0,
       lastJsonData: 0,
     });
     props.setSelectDao(false);

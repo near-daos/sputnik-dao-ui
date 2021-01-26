@@ -21,10 +21,7 @@ const defaultState = {
       switchNew: false,
       switchExpired: false,
     },
-    lastShownProposal: {
-      index: 0,
-      when: new Date('2020-04-22')
-    },
+    lastShownProposal: 0,
     lastJsonData: 0,
     ...readDefaultState(),
   }

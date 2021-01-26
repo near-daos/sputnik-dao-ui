@@ -342,6 +342,8 @@ const Dao = () => {
   const stateCtx = useGlobalState()
   const mutationCtx = useGlobalMutation()
   const [selectDao, setSelectDao] = useState(false);
+  const [showNewProposalNotification, setShowNewProposalNotification] = useState(false);
+
   let {dao} = useParams();
 
   const [proposalKind, setProposalKind] = useState({
@@ -559,29 +561,19 @@ const Dao = () => {
       }
     }
 
-
   }
 
   const [firstRun, setFirstRun] = useState(true);
+
 
   const getProposals = () => {
     if (stateCtx.config.contract !== "") {
       window.contract.get_num_proposals()
         .then(number => {
           setNumberProposals(number);
-          let d = new Date();
-          d.setHours(d.getHours() - 2);
-
-          if (stateCtx.config.lastShownProposal.index === 0) {
-            mutationCtx.updateConfig({
-                lastShownProposal: {
-                  index: number,
-                  when: new Date(),
-                },
-              }
-            )
-          }
-
+          mutationCtx.updateConfig({
+            lastShownProposal: number
+          })
           window.contract.get_proposals({from_index: 0, limit: number})
             .then(list => {
               const t = []
@@ -600,36 +592,49 @@ const Dao = () => {
     }
   }
 
-  /*
+
   async function fetchUrl() {
     const sputnikDao = stateCtx.config.contract;
-    const response = await fetch(updatesJsonUrl);
+    const response = await fetch(updatesJsonUrl + Math.floor(Math.random() * 10000) + 1);
     const json = await response.json();
     console.log(json[sputnikDao]);
     return json[sputnikDao];
   }
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetchUrl().then((json) => {
-        if (stateCtx.config.lastJsonData === 0 || stateCtx.config.lastJsonData !== json)
-          mutationCtx.updateConfig({
-            lastJsonData: json !== undefined ? json : 0,
-          })
-      }).catch((e) => {
-        console.log(e);
-      });
-    }, proposalsReload);
-  }, []);
+    if (!firstRun) {
+      const interval = setInterval(() => {
+        fetchUrl().then((json) => {
+          if (stateCtx.config.lastJsonData === 0 || stateCtx.config.lastJsonData !== json) {
+            mutationCtx.updateConfig({
+              lastJsonData: json !== undefined ? json : 0,
+            })
+          }
+        }).catch((e) => {
+          console.log(e);
+        });
+      }, proposalsReload);
+    } else {
+      setFirstRun(false);
+      getProposals();
+    }
+  }, [stateCtx.config.contract, firstRun]);
+
 
   useEffect(
     () => {
       getProposals();
+      console.log(numberProposals);
+      /*
+      if (stateCtx.config.lastJsonData !== 0 && stateCtx.config.lastShownProposal < numberProposals) {
+        setShowNewProposalNotification(true);
+      }
+      */
     },
     [stateCtx.config.contract, stateCtx.config.lastJsonData]
   )
-  */
 
+  /*
 
   useEffect(
     () => {
@@ -646,7 +651,7 @@ const Dao = () => {
     },
     [stateCtx.config.contract, firstRun]
   )
-
+  */
 
   useEffect(
     () => {
@@ -1030,6 +1035,7 @@ const Dao = () => {
                           </label>
                         </div>
                       </MDBCard>
+                      {/*
                       <MDBCard className="p-2 mb-2 mr-2">
                         <div className='custom-control custom-switch mr-2'>
                           <input
@@ -1045,6 +1051,7 @@ const Dao = () => {
                           </label>
                         </div>
                       </MDBCard>
+                      */}
                       <MDBCard className="p-2 mb-2">
                         <div className='custom-control custom-switch mr-2'>
                           <input
@@ -1077,7 +1084,7 @@ const Dao = () => {
                       || switchState.switchAll
                       || (item.status === 'Fail' && switchState.switchDone)
                       || (item.status === 'Success' && switchState.switchDone)
-                      || (item.status === 'Vote' && item.key >= stateCtx.config.lastShownProposal.index && switchState.switchNew)
+                      || (convertDuration(item.vote_period_end) > new Date() && item.status === 'Vote' && item.key >= stateCtx.config.lastShownProposal && switchState.switchNew)
 
                         ?
                         <Proposal data={item} key={key} id={key} council={council} setShowError={setShowError}
@@ -1091,7 +1098,7 @@ const Dao = () => {
             </MDBRow>
             {showError !== null ?
               <MDBNotification
-                //autohide={6000}
+                autohide={36000}
                 bodyClassName="p-5 font-weight-bold white-text"
                 className="stylish-color-dark"
                 closeClassName="white-text"
@@ -1112,6 +1119,31 @@ const Dao = () => {
               />
               : null
             }
+
+            {showNewProposalNotification ?
+              <MDBNotification
+                autohide={36000}
+                bodyClassName="p-5 font-weight-bold white-text"
+                className="stylish-color-dark"
+                closeClassName="white-text"
+                fade
+                icon="bell"
+                iconClassName="orange-text"
+                message="A new proposal has been added!"
+                show
+                text=""
+                title=""
+                titleClassName="elegant-color-dark white-text"
+                style={{
+                  position: "fixed",
+                  top: "60px",
+                  left: "10px",
+                  zIndex: 9999
+                }}
+              />
+              : null
+            }
+
             <MDBModal isOpen={addProposalModal} toggle={toggleProposalModal} centered position="center" size="lg">
               <MDBModalHeader className="text-center" titleClass="w-100 font-weight-bold" toggle={toggleProposalModal}>
                 Add New Proposal

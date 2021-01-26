@@ -76,10 +76,7 @@ export const ContainerProvider = ({children}) => {
           switchNew: state.config.filter.switchNew,
           switchExpired: state.config.filter.switchExpired,
         },
-        lastShownProposal: {
-          index: state.config.lastShownProposal.index,
-          when: state.config.lastShownProposal.when,
-        },
+        lastShownProposal: state.config.lastShownProposal,
         lastJsonData: state.config.lastJsonData,
       })
     )
