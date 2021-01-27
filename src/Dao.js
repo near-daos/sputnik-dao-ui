@@ -1223,7 +1223,7 @@ const Dao = () => {
           </>
           : null}
         {selectDao ?
-          <Selector setSelectDao={setSelectDao}/>
+          <Selector setShowError={setShowError} setSelectDao={setSelectDao}/>
           : null
         }
       </MDBContainer>
