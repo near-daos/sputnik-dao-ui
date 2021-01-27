@@ -335,7 +335,7 @@ const NewDao = (props) => {
           </MDBInput>
 
           <MDBInput name="council" value={council.value}
-                    onChange={changeHandler} label="Enter Council"
+                    onChange={changeHandler} label="Enter Council (one account per line)"
                     required group type="textarea">
             <div className="invalid-feedback">
               {council.message}
