@@ -145,11 +145,6 @@ const NewDao = (props) => {
         "grace_period": new Decimal(gracePeriod.value).mul('3.6e12').toFixed()
       }
 
-      console.log(JSON.stringify(argsList));
-      //console.log(Buffer.from(JSON.stringify(argsList).trim()).toString('base64'));
-      //console.log(Buffer.from('eyJwdXJwb3NlIjoiQ3JlYXRpbmcgTmV3IERBT1MiLCJjb3VuY2lsIjpbInNvbG8udGVzdG5ldCIsInNvbG8yLnRlc3RuZXQiXSwiYm9uZCI6IjIwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAiLCJ2b3RlX3BlcmlvZCI6IjM2MDAwMDAwMDAwMDAwIiwiZ3JhY2VfcGVyaW9kIjoiMzYwMDAwMDAwMDAwMDAifQo','base64').toString());
-      //console.log(Buffer.from('eyJwdXJwb3NlIjoiQ3JlYXRpbmcgTmV3IERBT1MiLCJjb3VuY2lsIjpbInNvbG8udGVzdG5ldCIsInNvbG8yLnRlc3RuZXQiXSwiYm9uZCI6IjIwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAiLCJ2b3RlX3BlcmlvZCI6IjM2MDAwMDAwMDAwMDAwIiwiZ3JhY2VfcGVyaW9kIjoiMzYwMDAwMDAwMDAwMDAifQ==','base64').toString());
-
 
       try {
         setShowSpinner(true);
@@ -309,9 +304,10 @@ const NewDao = (props) => {
   };
 
 
+
   return (
 
-    <MDBModal isOpen={showNewDao} toggle={toggleNewDaoModal} centered position="center" size="lg">
+    <MDBModal isOpen={showNewDao} toggle={()=>{}} centered position="center" size="lg">
       <MDBModalHeader className="text-center" titleClass="w-100 font-weight-bold" toggle={toggleNewDaoModal}>
         Add New DAO
       </MDBModalHeader>
@@ -447,8 +443,9 @@ const DaoInfo = (props) => {
     <div className="text-left">
       <MDBBox>
         <span
-          className="text-muted">Bond:</span> {bond !== null ? (new Decimal(bond.toString()).div(yoktoNear)).toString() : ''}NEAR;{" "}
+          className="text-muted">Bond:</span> {bond !== null ? (new Decimal(bond.toString()).div(yoktoNear)).toString() : ''} NEAR;{" "}
         <span className="text-muted">Vote Period:</span> {votePeriod ? timestampToReadable(votePeriod) : ''};{" "}
+        <span className="text-muted">Grace Period:</span> {gracePeriod ? timestampToReadable(gracePeriod) : ''};{" "}
         <span className="text-muted">Purpose:</span> <b>{purpose}</b>
       </MDBBox>
       <MDBCollapseHeader className="text-right p-2 m-0 font-small white" onClick={toggleCollapse}>
