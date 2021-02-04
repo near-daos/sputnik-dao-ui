@@ -15,314 +15,10 @@ import {Decimal} from 'decimal.js';
 import Selector from "./Selector";
 import {timestampToReadable, convertDuration, yoktoNear, proposalsReload, updatesJsonUrl} from './utils/funcs'
 import getConfig from "./config";
-import * as nearAPI from "near-api-js";
 import {Contract} from "near-api-js";
 import * as nearApi from "near-api-js";
+import {Proposal} from './ProposalPage';
 
-
-const Proposal = (props) => {
-  const [showModal, setShowModal] = useState(false);
-  const [modalText, setModalText] = useState('');
-  const [showSpinner, setShowSpinner] = useState(false);
-  const stateCtx = useGlobalState();
-  const [votedWarning, setVotedWarning] = useState(false);
-
-  const vote = async (vote) => {
-    try {
-      setShowSpinner(true);
-      await window.contract.vote({
-        id: props.data.key,
-        vote: vote,
-      })
-    } catch (e) {
-      console.log(e);
-      props.setShowError(e);
-    } finally {
-      setShowSpinner(false);
-    }
-  }
-
-  const finalize = async () => {
-    try {
-      setShowSpinner(true);
-      await window.contract.finalize({
-        id: props.data.key,
-      })
-    } catch (e) {
-      console.log(e);
-      props.setShowError(e);
-    } finally {
-      setShowSpinner(false);
-    }
-  }
-
-  const handleVoteYes = () => {
-
-    if (props.data.votes[window.walletConnection.getAccountId()] === undefined) {
-      vote('Yes').then().catch((e) => {
-        console.log(e);
-      });
-    } else {
-      setVotedWarning(true);
-    }
-  }
-
-  const handleVoteNo = () => {
-    if (props.data.votes[window.walletConnection.getAccountId()] === undefined) {
-      vote('No').then().catch((e) => {
-        console.log(e);
-      });
-    } else {
-      setVotedWarning(true);
-    }
-  }
-
-  const handleFinalize = () => {
-    finalize().then().catch((e) => {
-      console.log(e);
-    });
-  }
-
-  const toggleVoteWarningOff = () => {
-    setVotedWarning(false);
-  }
-
-
-  return (
-    <MDBCol className="col-12 col-sm-8 col-lg-6 mx-auto">
-
-      <MDBModal modalStyle="danger" centered size="sm" isOpen={votedWarning} toggle={toggleVoteWarningOff}>
-        <MDBModalHeader>Warning!</MDBModalHeader>
-        <MDBModalBody className="text-center">
-          You are already voted
-        </MDBModalBody>
-        <MDBModalFooter>
-          <MDBBtn className="w-100" color="info" onClick={toggleVoteWarningOff}>Close</MDBBtn>
-        </MDBModalFooter>
-      </MDBModal>
-
-      <MDBCard className="mb-5">
-        <MDBCardHeader className="text-center h4-responsive">
-          {props.data.kind.type === 'ChangePurpose' ? "Change DAO Purpose: " + props.data.kind.purpose : null}
-          {props.data.kind.type === 'NewCouncil' ? "New Council Member: " + props.data.target : null}
-          {props.data.kind.type === 'RemoveCouncil' ? "Remove Council Member: " + props.data.target : null}
-          {props.data.kind.type === 'ChangeVotePeriod' ? "Change Vote Period: " + `${props.data.kind.vote_period / 1e9 / 60 / 60 ^ 0}h ` + (props.data.kind.vote_period / 1e9 / 60 % 60).toFixed(0) + 'm' : null}
-
-          {props.data.kind.type === "Payout" ?
-            <div>
-              <div className="float-left">
-                Payout:
-              </div>
-              <div className="float-right font-weight-bold" style={{fontSize: 25}}>
-                <span style={{fontSize: 22, marginRight: 2}}>Ⓝ</span>
-                {(props.data.kind.amount / yoktoNear).toFixed(0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-              </div>
-            </div>
-            : null}
-          <div className="clearfix"/>
-
-        </MDBCardHeader>
-        <MDBCardBody>
-          <div className="float-left">
-            {(convertDuration(props.data.vote_period_end) < new Date() && props.data.status === 'Vote') ?
-              <h4><MDBBadge color="danger">Expired</MDBBadge></h4>
-              :
-              <>
-                {props.data.status === 'Fail' ?
-                  <h4><MDBBadge color="danger">{props.data.status}</MDBBadge></h4>
-                  :
-                  null
-                }
-                {props.data.status === 'Success' ?
-                  <h4><MDBBadge color="green">Passed / {props.data.status}</MDBBadge>{" "}<MDBIcon
-                    className="amber-text"
-                    icon="crown"/></h4>
-                  :
-                  null
-                }
-                {props.data.status === 'Vote' ?
-                  <h4><MDBBadge color="green">Active / {props.data.status}</MDBBadge></h4>
-                  :
-                  null
-                }
-                {props.data.status === 'Reject' ?
-                  <h4><MDBBadge color="danger">Passed / {props.data.status}</MDBBadge></h4>
-                  :
-                  null
-                }
-              </>
-            }
-          </div>
-          <div className="float-right h4-responsive">#{props.data.key}</div>
-          <div className="clearfix"/>
-          <MDBCardText>
-            <MDBBox className="h4-responsive black-text">{props.data.description}</MDBBox>
-            <hr/>
-            <div className="float-left text-muted h4-responsive">proposer</div>
-            <div className="float-right h4-responsive">
-              <a className="text-right" target="_blank"
-                 href={stateCtx.config.network.explorerUrl + "/accounts/" + props.data.proposer.toLowerCase()}>{props.data.proposer.toLowerCase()}</a>
-            </div>
-            <br/>
-            <div className="clearfix"/>
-            <div className="float-left text-muted h4-responsive">target</div>
-            <MDBBox className="float-right h4-responsive" style={{width: '80%'}}>
-              <a className="text-right float-right" target="_blank" style={{wordBreak: "break-word"}}
-                 href={stateCtx.config.network.explorerUrl + "/accounts/" + props.data.target.toLowerCase()}>{props.data.target.toLowerCase()}</a>
-            </MDBBox>
-            <div className="clearfix"/>
-          </MDBCardText>
-
-          {props.council.includes(window.walletConnection.getAccountId()) ?
-            <MDBTooltip
-              tag="span"
-              placement="top"
-            >
-              <MDBBtn
-                style={{borderRadius: 50}}
-                disabled={showSpinner || convertDuration(props.data.vote_period_end) < new Date() || props.data.status !== 'Vote'}
-                onClick={handleVoteYes}
-                floating
-                color="green darken-1"
-                className='h5-responsive'
-                size="sm">
-                <MDBIcon icon='thumbs-up' size="2x" className='white-text m-2 p-2'/>
-              </MDBBtn>
-              <span>Vote YES</span>
-            </MDBTooltip>
-            : null}
-
-          {(props.data.proposer === window.walletConnection.getAccountId() && convertDuration(props.data.vote_period_end) < new Date() && props.data.status === 'Vote') ?
-            <MDBTooltip
-              tag="span"
-              placement="top"
-            >
-              <MDBBtn
-                style={{borderRadius: 50}}
-                disabled={showSpinner}
-                onClick={handleFinalize}
-                color="info"
-                floating
-                className='h5-responsive float-right'
-                size="sm">
-                <MDBIcon icon="check-circle" size="2x" className='white-text m-2 p-2'/>
-              </MDBBtn>
-              <span>Finalise</span>
-            </MDBTooltip>
-            : null}
-
-          {props.council.includes(window.walletConnection.getAccountId()) ?
-            <MDBTooltip
-              tag="span"
-              placement="top"
-            >
-              <MDBBtn
-                style={{borderRadius: 50}}
-                disabled={showSpinner || convertDuration(props.data.vote_period_end) < new Date() || props.data.status !== 'Vote'}
-                onClick={handleVoteNo}
-                color="red"
-                floating
-                className='h5-responsive float-right'
-                size="sm">
-                <MDBIcon icon='thumbs-down' size="2x" className='white-text m-2 p-2'/>
-              </MDBBtn>
-              <span>Vote NO</span>
-            </MDBTooltip>
-            : null}
-
-        </MDBCardBody>
-        <div className='rounded-bottom mdb-color lighten-3 text-center pt-3 pl-5 pr-5'>
-          <ul className='list-unstyled list-inline font-small'>
-            <li className='list-inline-item pr-2 white-text h4-responsive'>
-              <MDBIcon far
-                       icon='clock'/>{" "}{convertDuration(props.data.vote_period_end).toLocaleDateString()} {convertDuration(props.data.vote_period_end).toLocaleTimeString()}
-            </li>
-
-            <li className='list-inline-item pr-2'>
-              <div>
-                {props.data.votes !== undefined && Object.keys(props.data.votes).length !== 0 && Object.values(props.data.votes).includes('Yes') ?
-                  <MDBPopover
-                    placement="top"
-                    popover
-                    clickable
-                    domElement='div'
-                    id="popover1"
-                  >
-                    <div className="d-inline-block">
-                      <MDBIcon icon='thumbs-up' size="2x" className='lime-text mr-1'/>
-                    </div>
-                    <div>
-                      <MDBPopoverBody>
-                        <div className="h4-responsive">
-                          {
-                            Object.keys(props.data.votes).map((item, key) => (
-                              <>
-                                {props.data.votes[item] === 'Yes' ?
-                                  <li key={key}>{item}</li>
-                                  : null
-                                }
-                              </>
-                            ))
-
-                          }
-                        </div>
-                      </MDBPopoverBody>
-                    </div>
-                  </MDBPopover>
-                  :
-                  <MDBIcon icon='thumbs-up' size="2x" className='lime-text mr-1'/>
-                }
-                <span className="white-text h3-responsive">{props.data.vote_yes}</span>
-              </div>
-            </li>
-
-            <li className='list-inline-item pr-2'>
-              <div>
-                {props.data.votes !== undefined && Object.keys(props.data.votes).length !== 0 && Object.values(props.data.votes).includes('No') ?
-                  <MDBPopover
-                    placement="top"
-                    popover
-                    clickable
-                    domElement='div'
-                    id="popover1"
-                  >
-                    <div className="d-inline-block">
-                      <MDBIcon icon='thumbs-down' size="2x" className='amber-text mr-1'/>
-                    </div>
-                    <div>
-                      <MDBPopoverBody>
-                        <div className="h4-responsive">
-                          {
-                            Object.keys(props.data.votes).map((item, key) => (
-                              <>
-                                {props.data.votes[item] === 'No' ?
-                                  <li key={key}>{item}</li>
-                                  : null
-                                }
-                              </>
-                            ))
-
-                          }
-                        </div>
-                      </MDBPopoverBody>
-                    </div>
-                  </MDBPopover>
-                  :
-                  <MDBIcon icon='thumbs-down' size="2x" className='amber-text mr-1'/>
-                }
-                <span className="white-text h3-responsive">{props.data.vote_no}</span>
-              </div>
-            </li>
-          </ul>
-        </div>
-      </MDBCard>
-      {/*<QuestionModal show={showModal} text={modalText} handleVoteYes={handleVoteYes}/>*/}
-    </MDBCol>
-
-  )
-
-
-}
 
 const Dao = () => {
   const [buttonDisabled, setButtonDisabled] = useState(true)
@@ -411,7 +107,7 @@ const Dao = () => {
     const provider = new nearApi.providers.JsonRpcProvider(nearConfig.nodeUrl);
     const connection = new nearApi.Connection(nearConfig.nodeUrl, provider, {});
     try {
-      await new nearAPI.Account(connection, accountId).state();
+      await new nearApi.Account(connection, accountId).state();
       return true;
     } catch (error) {
       console.log(error);
@@ -453,9 +149,9 @@ const Dao = () => {
     if (!nearAccountValid) {
       e.target.proposalTarget.className += " is-invalid";
       e.target.proposalTarget.classList.remove("is-valid");
-      setProposalTarget({value: proposalTarget.value ,valid: false, message: 'user account does not exist!'});
+      setProposalTarget({value: proposalTarget.value, valid: false, message: 'user account does not exist!'});
     } else {
-      setProposalTarget({value: proposalTarget.value ,valid: true, message: ''});
+      setProposalTarget({value: proposalTarget.value, valid: true, message: ''});
       e.target.proposalTarget.classList.remove("is-invalid");
       e.target.proposalTarget.className += " is-valid";
     }
@@ -1104,8 +800,7 @@ const Dao = () => {
                       || (convertDuration(item.vote_period_end) > new Date() && item.status === 'Vote' && item.key >= stateCtx.config.lastShownProposal && switchState.switchNew)
 
                         ?
-                        <Proposal data={item} key={key} id={key} council={council} setShowError={setShowError}
-                                  switchState={switchState}/>
+                        <Proposal dao={stateCtx.config.contract} data={item} key={key} id={item.key} council={council} setShowError={setShowError}/>
                         : null
                     }
                   </>

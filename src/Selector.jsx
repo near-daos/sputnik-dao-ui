@@ -20,8 +20,6 @@ import {useGlobalMutation, useGlobalState} from './utils/container'
 import useRouter from "./utils/use-router";
 import {Decimal} from "decimal.js";
 import {timestampToReadable, yoktoNear} from './utils/funcs'
-import Navbar from "./Navbar";
-import Footer from "./Footer";
 import Loading from "./utils/Loading";
 
 
