@@ -453,7 +453,7 @@ const Dao = () => {
     if (!nearAccountValid) {
       e.target.proposalTarget.className += " is-invalid";
       e.target.proposalTarget.classList.remove("is-valid");
-      setProposalTarget({value: proposalTarget.value ,valid: false, message: 'user account does not exists!'});
+      setProposalTarget({value: proposalTarget.value ,valid: false, message: 'user account does not exist!'});
     } else {
       setProposalTarget({value: proposalTarget.value ,valid: true, message: ''});
       e.target.proposalTarget.classList.remove("is-invalid");
