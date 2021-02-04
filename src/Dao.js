@@ -11,10 +11,13 @@ import {
   MDBInput, MDBBox, MDBTooltip, MDBPopover, MDBPopoverBody
 } from "mdbreact";
 import {useGlobalState, useGlobalMutation} from './utils/container'
-import {Contract} from "near-api-js";
 import {Decimal} from 'decimal.js';
 import Selector from "./Selector";
 import {timestampToReadable, convertDuration, yoktoNear, proposalsReload, updatesJsonUrl} from './utils/funcs'
+import getConfig from "./config";
+import * as nearAPI from "near-api-js";
+import {Contract} from "near-api-js";
+import * as nearApi from "near-api-js";
 
 
 const Proposal = (props) => {
@@ -402,24 +405,32 @@ const Dao = () => {
     setAddProposalModal(!addProposalModal);
   }
 
+  const nearConfig = getConfig(process.env.NODE_ENV || 'development')
+
+  async function accountExists(accountId) {
+    const provider = new nearApi.providers.JsonRpcProvider(nearConfig.nodeUrl);
+    const connection = new nearApi.Connection(nearConfig.nodeUrl, provider, {});
+    try {
+      await new nearAPI.Account(connection, accountId).state();
+      return true;
+    } catch (error) {
+      console.log(error);
+      return false;
+    }
+  }
+
+
   const submitProposal = async (e) => {
     e.preventDefault();
     e.persist();
+
+    const nearAccountValid = await accountExists(proposalTarget.value);
 
     let validateTarget = validateField("proposalTarget", proposalTarget.value);
     let validateDescription = validateField("proposalDescription", proposalDescription.value);
     let validateChangePurpose = validateField("changePurpose", changePurpose.value);
     let validateAmount = validateField("proposalAmount", proposalAmount.value);
 
-    /*
-    if (e.target.proposalKind.value === 'false') {
-      e.target.proposalKind.className += " is-invalid";
-      e.target.proposalKind.classList.remove("is-valid");
-    } else {
-      e.target.proposalKind.classList.remove("is-invalid");
-      e.target.proposalKind.className += " is-valid";
-    }
-    */
 
     if (showChangePurpose) {
       if (!validateChangePurpose) {
@@ -435,6 +446,16 @@ const Dao = () => {
       e.target.proposalTarget.className += " is-invalid";
       e.target.proposalTarget.classList.remove("is-valid");
     } else {
+      e.target.proposalTarget.classList.remove("is-invalid");
+      e.target.proposalTarget.className += " is-valid";
+    }
+
+    if (!nearAccountValid) {
+      e.target.proposalTarget.className += " is-invalid";
+      e.target.proposalTarget.classList.remove("is-valid");
+      setProposalTarget({value: proposalTarget.value ,valid: false, message: 'user account does not exists!'});
+    } else {
+      setProposalTarget({value: proposalTarget.value ,valid: true, message: ''});
       e.target.proposalTarget.classList.remove("is-invalid");
       e.target.proposalTarget.className += " is-valid";
     }
@@ -459,7 +480,7 @@ const Dao = () => {
     }
 
     if (showPayout) {
-      if (e.target.proposalKind.value !== 'false' && validateTarget && validateDescription && validateAmount) {
+      if (e.target.proposalKind.value !== 'false' && nearAccountValid && validateTarget && validateDescription && validateAmount) {
         try {
           setShowSpinner(true);
           const amount = new Decimal(e.target.proposalAmount.value);
@@ -487,7 +508,7 @@ const Dao = () => {
     }
 
     if (showCouncilChange) {
-      if (validateTarget && validateDescription) {
+      if (validateTarget && nearAccountValid && validateDescription) {
         try {
           setShowSpinner(true);
           await window.contract.add_proposal({
@@ -510,7 +531,7 @@ const Dao = () => {
       }
     }
     if (showChangePurpose) {
-      if (validateTarget && validateDescription && changePurpose) {
+      if (validateTarget && nearAccountValid && validateDescription && changePurpose) {
         try {
           setShowSpinner(true);
           await window.contract.add_proposal({
@@ -535,7 +556,7 @@ const Dao = () => {
     }
 
     if (showVotePeriod) {
-      if (validateTarget && validateDescription) {
+      if (validateTarget && nearAccountValid && validateDescription) {
         const votePeriod = new Decimal(e.target.votePeriod.value).mul('3.6e12');
         try {
           setShowSpinner(true);

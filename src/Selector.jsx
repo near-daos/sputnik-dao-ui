@@ -22,6 +22,7 @@ import {Decimal} from "decimal.js";
 import {timestampToReadable, yoktoNear} from './utils/funcs'
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import Loading from "./utils/Loading";
 
 
 const NewDao = (props) => {
@@ -304,10 +305,10 @@ const NewDao = (props) => {
   };
 
 
-
   return (
 
-    <MDBModal isOpen={showNewDao} toggle={()=>{}} centered position="center" size="lg">
+    <MDBModal isOpen={showNewDao} toggle={() => {
+    }} centered position="center" size="lg">
       <MDBModalHeader className="text-center" titleClass="w-100 font-weight-bold" toggle={toggleNewDaoModal}>
         Add New DAO
       </MDBModalHeader>
@@ -467,13 +468,16 @@ const Selector = (props) => {
   const mutationCtx = useGlobalMutation()
   const [daoList, setDaoList] = useState([]);
   const [showNewDaoModal, setShowNewDaoModal] = useState(false);
+  const [showLoading, setShowLoading] = useState(true);
 
   useEffect(
     () => {
       window.factoryContract.get_dao_list()
         .then(r => {
           setDaoList(r);
+          setShowLoading(false);
         }).catch((e) => {
+          setShowLoading(false);
         console.log(e);
         mutationCtx.toastError(e);
       })
@@ -502,6 +506,7 @@ const Selector = (props) => {
   }
 
 
+
   return (
     <div>
       <MDBCard className="p-3 m-3">
@@ -512,6 +517,7 @@ const Selector = (props) => {
                   className="">CREATE NEW DAO</MDBBtn>
           <MDBBox className="text-muted text-center">Attention! Required minimum 30 NEAR for the storage.</MDBBox>
         </MDBCardHeader>
+        {showLoading ? <Loading/> : null}
         <MDBCardBody className="text-center">
           {daoList ? daoList.map((item, key) => (
             <MDBCard className="m-2" key={key}>
@@ -524,7 +530,7 @@ const Selector = (props) => {
                         className="float-right">SELECT</MDBBtn>
               </div>
             </MDBCard>
-          )) : ''}
+          )) : null}
         </MDBCardBody>
       </MDBCard>
       {showNewDaoModal ?
