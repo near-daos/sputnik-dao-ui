@@ -8,7 +8,7 @@ import {
   MDBCard,
   MDBCardBody,
   MDBCardHeader, MDBCardText, MDBCol,
-  MDBContainer, MDBIcon,MDBMask,
+  MDBContainer, MDBIcon, MDBLink, MDBMask,
   MDBModal,
   MDBModalBody,
   MDBModalFooter,
@@ -151,7 +151,8 @@ export const Proposal = (props) => {
               </>
             }
           </div>
-          <div className="float-right h4-responsive"><a href={"#/" + props.dao + "/" + props.id} target="_blank"><MDBIcon icon="link" /></a> #{props.id}</div>
+          <div className="float-right h4-responsive"><a href={"#/" + props.dao + "/" + props.id}
+                                                        target="_blank"><MDBIcon icon="link"/></a> #{props.id}</div>
           <div className="clearfix"/>
           <MDBCardText>
             <MDBBox className="h4-responsive black-text">{props.data.description}</MDBBox>
@@ -367,7 +368,7 @@ const ProposalPage = () => {
           setProposals(t);
         })
     },
-    [dao,proposal]
+    [dao, proposal]
   )
 
   console.log(proposals)
@@ -377,9 +378,21 @@ const ProposalPage = () => {
       <MDBMask className="d-flex justify-content-center grey lighten-2 align-items-center gradient"/>
       <Navbar/>
       <MDBContainer style={{minHeight: "100vh"}} className="mt-5">
+        <MDBCol className="col-12 col-sm-8 col-lg-6 mx-auto mb-3">
+          <MDBCard>
+            <MDBCardBody className="text-left p-4 m-4">
+              <MDBBox><b>Proposal DAO:</b> {dao}</MDBBox>
+              <MDBBox><b>Council:</b> {council.map((item,key) => (<span>{item}{" "}</span>))}</MDBBox>
+              <hr/>
+              <MDBLink to={"/" + dao} className="btn-secondary text-center">BACK TO DAO</MDBLink>
+            </MDBCardBody>
+          </MDBCard>
+        </MDBCol>
+
         {proposals !== null ?
           proposals.map((item, key) => (
-            <Proposal data={item} key={parseInt(proposal)} id={parseInt(proposal)} council={council} setShowError={setShowError} dao={dao}/>
+            <Proposal data={item} key={parseInt(proposal)} id={parseInt(proposal)} council={council}
+                      setShowError={setShowError} dao={dao}/>
           ))
           : null
         }
@@ -389,6 +402,7 @@ const ProposalPage = () => {
             <MDBBox>Sorry, nothing was found</MDBBox>
           </MDBCard>
           : null}
+
       </MDBContainer>
       <Footer/>
     </MDBView>
