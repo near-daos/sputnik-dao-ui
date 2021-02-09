@@ -18,6 +18,7 @@ import getConfig from "./config";
 import {Contract} from "near-api-js";
 import * as nearApi from "near-api-js";
 import {Proposal} from './ProposalPage';
+import Loading from "./utils/Loading";
 
 
 const Dao = () => {
@@ -42,6 +43,7 @@ const Dao = () => {
   const mutationCtx = useGlobalMutation()
   const [selectDao, setSelectDao] = useState(false);
   const [showNewProposalNotification, setShowNewProposalNotification] = useState(false);
+  const [showLoading, setShowLoading] = useState(true);
 
   let {dao} = useParams();
 
@@ -91,6 +93,19 @@ const Dao = () => {
           viewMethods: ['get_council', 'get_bond', 'get_proposal', 'get_num_proposals', 'get_proposals', 'get_vote_period', 'get_purpose'],
           changeMethods: ['vote', 'add_proposal', 'finalize'],
         })
+      }
+    },
+    [stateCtx.config.contract]
+  )
+
+
+  useEffect(
+    () => {
+      if (stateCtx.config.contract !== "" && dao !== stateCtx.config.contract && dao !== undefined) {
+        mutationCtx.updateConfig({
+          contract: "",
+        });
+        location.reload();
       }
     },
     [stateCtx.config.contract]
@@ -299,10 +314,12 @@ const Dao = () => {
                 t.push(t2);
               })
               setProposals(t);
+              setShowLoading(false);
             });
         }).catch((e) => {
         console.log(e);
         setShowError(e);
+        setShowLoading(false);
       })
     }
   }
@@ -315,6 +332,8 @@ const Dao = () => {
     return json[sputnikDao];
   }
 
+
+  /*
   useEffect(() => {
     if (!firstRun) {
       const interval = setInterval(() => {
@@ -338,16 +357,11 @@ const Dao = () => {
   useEffect(
     () => {
       getProposals();
-      /*
-      if (stateCtx.config.lastJsonData !== 0 && stateCtx.config.lastShownProposal < numberProposals) {
-        setShowNewProposalNotification(true);
-      }
-      */
     },
     [stateCtx.config.contract, stateCtx.config.lastJsonData]
   )
+  */
 
-  /*
 
   useEffect(
     () => {
@@ -364,7 +378,6 @@ const Dao = () => {
     },
     [stateCtx.config.contract, firstRun]
   )
-  */
 
   useEffect(
     () => {
@@ -800,7 +813,8 @@ const Dao = () => {
                       || (convertDuration(item.vote_period_end) > new Date() && item.status === 'Vote' && item.key >= stateCtx.config.lastShownProposal && switchState.switchNew)
 
                         ?
-                        <Proposal dao={stateCtx.config.contract} data={item} key={key} id={item.key} council={council} setShowError={setShowError}/>
+                        <Proposal dao={stateCtx.config.contract} data={item} key={key} id={item.key} council={council}
+                                  setShowError={setShowError}/>
                         : null
                     }
                   </>
@@ -942,6 +956,7 @@ const Dao = () => {
           <Selector setShowError={setShowError} setSelectDao={setSelectDao}/>
           : null
         }
+        {showLoading && !selectDao ? <Loading/> : null}
       </MDBContainer>
       <Footer/>
     </MDBView>
