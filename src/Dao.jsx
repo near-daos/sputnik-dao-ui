@@ -1,27 +1,42 @@
-import React, {useState, useEffect} from 'react'
+import React, {useEffect, useState} from 'react'
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import useRouter from './utils/use-router'
 import {useParams} from "react-router-dom";
 
 import {
-  MDBView, MDBMask, MDBContainer, MDBCard, MDBCardBody, MDBCardText,
-  MDBCardTitle, MDBCardImage, MDBRow, MDBCol, MDBBtn, MDBCardHeader, MDBBadge,
-  MDBNotification, MDBModal, MDBModalBody, MDBModalHeader, MDBModalFooter, MDBIcon,
-  MDBInput, MDBBox, MDBTooltip, MDBPopover, MDBPopoverBody
+  MDBBox,
+  MDBBtn,
+  MDBCard,
+  MDBCardBody,
+  MDBCardHeader,
+  MDBCol,
+  MDBContainer,
+  MDBInput,
+  MDBMask,
+  MDBModal,
+  MDBModalBody,
+  MDBModalFooter,
+  MDBModalHeader,
+  MDBNotification,
+  MDBRow,
+  MDBView
 } from "mdbreact";
-import {useGlobalState, useGlobalMutation} from './utils/container'
+import {useGlobalMutation, useGlobalState} from './utils/container'
 import {Decimal} from 'decimal.js';
 import Selector from "./Selector";
-import {timestampToReadable, convertDuration, yoktoNear, proposalsReload, updatesJsonUrl} from './utils/funcs'
+import {convertDuration, proposalsReload, timestampToReadable, updatesJsonUrl, yoktoNear} from './utils/funcs'
 import getConfig from "./config";
-import {Contract} from "near-api-js";
 import * as nearApi from "near-api-js";
+import {Contract} from "near-api-js";
 import {Proposal} from './ProposalPage';
 import Loading from "./utils/Loading";
 
 
 const Dao = () => {
+  const routerCtx = useRouter()
+  const stateCtx = useGlobalState()
+  const mutationCtx = useGlobalMutation()
   const [buttonDisabled, setButtonDisabled] = useState(true)
   const [showNotification, setShowNotification] = useState(false)
   const [numberProposals, setNumberProposals] = useState(0);
@@ -38,12 +53,10 @@ const Dao = () => {
   const [showChangePurpose, setShowChangePurpose] = useState(false);
   const [showVotePeriod, setShowVotePeriod] = useState(false);
   const [disableTarget, setDisableTarget] = useState(false);
-  const routerCtx = useRouter()
-  const stateCtx = useGlobalState()
-  const mutationCtx = useGlobalMutation()
   const [selectDao, setSelectDao] = useState(false);
   const [showNewProposalNotification, setShowNewProposalNotification] = useState(false);
   const [showLoading, setShowLoading] = useState(true);
+  const [daoState, setDaoState] = useState(0);
 
   let {dao} = useParams();
 
@@ -117,16 +130,27 @@ const Dao = () => {
   }
 
   const nearConfig = getConfig(process.env.NODE_ENV || 'development')
+  const provider = new nearApi.providers.JsonRpcProvider(nearConfig.nodeUrl);
+  const connection = new nearApi.Connection(nearConfig.nodeUrl, provider, {});
 
   async function accountExists(accountId) {
-    const provider = new nearApi.providers.JsonRpcProvider(nearConfig.nodeUrl);
-    const connection = new nearApi.Connection(nearConfig.nodeUrl, provider, {});
     try {
       await new nearApi.Account(connection, accountId).state();
       return true;
     } catch (error) {
       console.log(error);
       return false;
+    }
+  }
+
+  async function getDaoState(dao) {
+    try {
+      const state = await new nearApi.Account(connection, dao).state();
+      const amountYokto = new Decimal(state.amount);
+      return amountYokto.div(yoktoNear).toFixed(2);
+    } catch (error) {
+      console.log(error);
+      return 0;
     }
   }
 
@@ -377,6 +401,20 @@ const Dao = () => {
       }
     },
     [stateCtx.config.contract, firstRun]
+  )
+
+  useEffect(
+    () => {
+      if (stateCtx.config.contract !== "") {
+        getDaoState(stateCtx.config.contract).then(r => {
+          setDaoState(r);
+        }).catch((e) => {
+          console.log(e);
+          setShowError(e);
+        })
+      }
+    },
+    [stateCtx.config.contract]
   )
 
   useEffect(
@@ -690,9 +728,10 @@ const Dao = () => {
                                               href={stateCtx.config.network.explorerUrl}>{stateCtx.config.network.networkId}</a>
                               </li>
                               <li>DAO: {stateCtx.config.contract}</li>
-                              <li>Bond: {bond ? (new Decimal(bond).div(yoktoNear)).toString() : ''} Ⓝ</li>
+                              <li>Bond: Ⓝ {bond ? (new Decimal(bond).div(yoktoNear)).toString() : ''}</li>
                               <li>Purpose: {daoPurpose}</li>
                               <li>Vote Period: {daoVotePeriod ? timestampToReadable(daoVotePeriod) : ''}</li>
+                              <li>DAO Funds: Ⓝ {daoState ? daoState : ''}</li>
                             </ul>
                           </MDBCardBody>
                         </MDBCard>
