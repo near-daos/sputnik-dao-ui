@@ -199,10 +199,10 @@ const NewDao = (props) => {
   }
 
   const validateAmount = (field, name, showMessage) => {
-    if (name && !isNaN(name) && name >= 30) {
+    if (name && !isNaN(name) && name >= 35) {
       return true;
     } else {
-      showMessage("Minimum amount is 30 NEAR", 'warning', field);
+      showMessage("Minimum amount is 35 NEAR", 'warning', field);
       return false;
     }
   }
@@ -367,7 +367,7 @@ const NewDao = (props) => {
 
           <MDBInput
             value={amount.value}
-            onChange={changeHandler} label="Amount to transfer to the DAO (minimum 30NEAR for storage)"
+            onChange={changeHandler} label="Amount to transfer to the DAO (minimum 35 NEAR for storage)"
             name="amount" group>
             <div className="invalid-feedback">
               {amount.message}
