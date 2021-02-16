@@ -513,7 +513,7 @@ const Selector = (props) => {
           <hr/>
           <MDBBtn color="red" onClick={toggleNewDao}
                   className="">CREATE NEW DAO</MDBBtn>
-          <MDBBox className="text-muted text-center">Attention! Required minimum 30 NEAR for the storage.</MDBBox>
+          <MDBBox className="text-muted text-center">Attention! Required minimum 35 NEAR for the storage.</MDBBox>
         </MDBCardHeader>
         {showLoading ? <Loading/> : null}
         <MDBCardBody className="text-center">
