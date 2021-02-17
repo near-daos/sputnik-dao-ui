@@ -484,6 +484,7 @@ const DaoInfo = (props) => {
         </div>
         <div className="float-right">
           <MDBBtn
+            outline
             color="primary"
             size="sm"
             onClick={toggleCollapse}
@@ -506,8 +507,7 @@ const DaoInfo = (props) => {
   );
 }
 
-const Selector = (props) =>
-{
+const Selector = (props) => {
   const routerCtx = useRouter()
   const stateCtx = useGlobalState()
   const mutationCtx = useGlobalMutation()
@@ -553,7 +553,7 @@ const Selector = (props) =>
 
   return (
     <div>
-      <MDBCard className="p-3 m-3">
+      <MDBCard className="p-md-3 m-md-3">
         <MDBCardHeader className="text-center" titleClass="w-100" tag="p">
           Please select DAO
           <hr/>
@@ -568,11 +568,10 @@ const Selector = (props) =>
               <MDBCardHeader color="white-text unique-color" className="h5-responsive">{item}</MDBCardHeader>
               <MDBCardBody>
                 <DaoInfo item={item}/>
-              </MDBCardBody>
-              <div className="">
+                <hr/>
                 <MDBBtn name={item} onClick={handleSelect} color="secondary" size="sm"
-                        className="w-75">SELECT</MDBBtn>
-              </div>
+                        className="float-right">SELECT</MDBBtn>
+              </MDBCardBody>
             </MDBCard>
           )) : null}
         </MDBCardBody>
