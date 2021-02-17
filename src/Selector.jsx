@@ -8,14 +8,13 @@ import {
   MDBCard,
   MDBCardBody,
   MDBCardHeader,
-  MDBCollapse,
-  MDBCollapseHeader, MDBContainer, MDBInput,
-  MDBListGroup,
-  MDBListGroupItem, MDBMask,
+  MDBIcon,
+  MDBInput,
   MDBModal,
   MDBModalBody,
   MDBModalFooter,
-  MDBModalHeader, MDBView
+  MDBModalHeader,
+  MDBCol, MDBContainer, MDBRow,
 } from "mdbreact";
 import {useGlobalMutation, useGlobalState} from './utils/container'
 import useRouter from "./utils/use-router";
@@ -472,28 +471,43 @@ const DaoInfo = (props) => {
   }
 
   return (
-    <div className="text-left">
-      <MDBBox>
+    <>
+      <div className="text-left">
         <h6 className="" color="light">purpose: {purpose}</h6>
-        <MDBBadge className="mr-2 p-2" color="primary" pill>Bond: Ⓝ {bond !== null ? (new Decimal(bond.toString()).div(yoktoNear)).toString() : ''}</MDBBadge>
-        <MDBBadge className="m-2 p-2" color="primary" pill>Vote Period: {votePeriod ? timestampToReadable(votePeriod) : ''}</MDBBadge>
-        {gracePeriod ? '<MDBBadge className="m-2 p-2" color="primary" pill>Grace Period: {gracePeriod ? timestampToReadable(gracePeriod) : null}</MDBBadge>' : null}
-        <MDBBadge className="m-2 p-2" color="info" pill>DAO Funds: <b>Ⓝ {daoState}</b></MDBBadge>
-      </MDBBox>
-      <MDBCollapseHeader className="text-right p-2 m-0 font-small white" onClick={toggleCollapse}>
-        view council{" "}
-        <i className={collapseState ? "fa fa-angle-down rotate-icon" : "fa fa-angle-down"}/>
-      </MDBCollapseHeader>
-      <MDBCollapse className="p-0 m-0 mb-2 border-light" isOpen={collapseState}>
-        <MDBListGroup className="text-left">
-          {council.map((item, key) => <MDBListGroupItem className="p-1" key={key}>{item}</MDBListGroupItem>)}
-        </MDBListGroup>
-      </MDBCollapse>
-    </div>
+        <div className="float-left">
+          <MDBBadge className="mr-2 p-2" color="primary" pill>Bond:
+            Ⓝ {bond !== null ? (new Decimal(bond.toString()).div(yoktoNear)).toString() : ''}</MDBBadge>
+          <MDBBadge className="m-2 p-2" color="primary" pill>Vote
+            Period: {votePeriod ? timestampToReadable(votePeriod) : ''}</MDBBadge>
+          {gracePeriod ? '<MDBBadge className="m-2 p-2" color="primary" pill>Grace Period: {gracePeriod ? timestampToReadable(gracePeriod) : null}</MDBBadge>' : null}
+          <MDBBadge className="m-2 p-2" color="info" pill>DAO Funds: <b>Ⓝ {daoState}</b></MDBBadge>
+        </div>
+        <div className="float-right">
+          <MDBBtn
+            color="primary"
+            size="sm"
+            onClick={toggleCollapse}
+          >
+            view council{" "}
+            <MDBIcon icon={!collapseState ? "arrow-down" : "arrow-up"}/>
+          </MDBBtn>
+        </div>
+        <div className="clearfix"/>
+      </div>
+      {collapseState ?
+        <div>
+          <hr/>
+          <MDBCol>
+            {council.map((item, key) => <div className="text-right" key={key}>{item}</div>)}
+          </MDBCol>
+        </div>
+        : null}
+    </>
   );
 }
 
-const Selector = (props) => {
+const Selector = (props) =>
+{
   const routerCtx = useRouter()
   const stateCtx = useGlobalState()
   const mutationCtx = useGlobalMutation()
@@ -557,7 +571,7 @@ const Selector = (props) => {
               </MDBCardBody>
               <div className="">
                 <MDBBtn name={item} onClick={handleSelect} color="secondary" size="sm"
-                        className="float-right">SELECT</MDBBtn>
+                        className="w-75">SELECT</MDBBtn>
               </div>
             </MDBCard>
           )) : null}
