@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react'
 import {Contract} from "near-api-js";
 
 import {
+  MDBBadge,
   MDBBox,
   MDBBtn,
   MDBCard,
@@ -21,6 +22,8 @@ import useRouter from "./utils/use-router";
 import {Decimal} from "decimal.js";
 import {timestampToReadable, yoktoNear} from './utils/funcs'
 import Loading from "./utils/Loading";
+import * as nearApi from "near-api-js";
+import getConfig from "./config";
 
 
 const NewDao = (props) => {
@@ -393,6 +396,21 @@ const NewDao = (props) => {
 
 }
 
+
+async function getDaoState(dao) {
+  const nearConfig = getConfig(process.env.NODE_ENV || 'development')
+  const provider = new nearApi.providers.JsonRpcProvider(nearConfig.nodeUrl);
+  const connection = new nearApi.Connection(nearConfig.nodeUrl, provider, {});
+  try {
+    const state = await new nearApi.Account(connection, dao).state();
+    const amountYokto = new Decimal(state.amount);
+    return amountYokto.div(yoktoNear).toFixed(2);
+  } catch (error) {
+    console.log(error);
+    return 0;
+  }
+}
+
 const DaoInfo = (props) => {
   const contractId = props.item;
   const [council, setCouncil] = useState([]);
@@ -401,12 +419,27 @@ const DaoInfo = (props) => {
   const [gracePeriod, setGracePeriod] = useState(null);
   const [purpose, setPurpose] = useState(null);
   const [collapseState, setCollapseState] = useState(false);
+  const [daoState, setDaoState] = useState(0);
+
 
   const contract = new Contract(window.walletConnection.account(), contractId, {
     viewMethods: ['get_council', 'get_bond', 'get_num_proposals', 'get_purpose', 'get_vote_period'],
     changeMethods: [],
   })
 
+
+  useEffect(
+    () => {
+      if (contractId !== "") {
+        getDaoState(contractId).then(r => {
+          setDaoState(r);
+        }).catch((e) => {
+          console.log(e);
+        })
+      }
+    },
+    []
+  )
 
   useEffect(
     () => {
@@ -441,11 +474,11 @@ const DaoInfo = (props) => {
   return (
     <div className="text-left">
       <MDBBox>
-        <span
-          className="text-muted">Bond:</span> {bond !== null ? (new Decimal(bond.toString()).div(yoktoNear)).toString() : ''} NEAR;{" "}
-        <span className="text-muted">Vote Period:</span> {votePeriod ? timestampToReadable(votePeriod) : ''};{" "}
-        <span className="text-muted">Grace Period:</span> {gracePeriod ? timestampToReadable(gracePeriod) : ''};{" "}
-        <span className="text-muted">Purpose:</span> <b>{purpose}</b>
+        <h6 className="" color="light">purpose: {purpose}</h6>
+        <MDBBadge className="mr-2 p-2" color="primary" pill>Bond: Ⓝ {bond !== null ? (new Decimal(bond.toString()).div(yoktoNear)).toString() : ''}</MDBBadge>
+        <MDBBadge className="m-2 p-2" color="primary" pill>Vote Period: {votePeriod ? timestampToReadable(votePeriod) : ''}</MDBBadge>
+        {gracePeriod ? '<MDBBadge className="m-2 p-2" color="primary" pill>Grace Period: {gracePeriod ? timestampToReadable(gracePeriod) : null}</MDBBadge>' : null}
+        <MDBBadge className="m-2 p-2" color="info" pill>DAO Funds: <b>Ⓝ {daoState}</b></MDBBadge>
       </MDBBox>
       <MDBCollapseHeader className="text-right p-2 m-0 font-small white" onClick={toggleCollapse}>
         view council{" "}
@@ -475,7 +508,7 @@ const Selector = (props) => {
           setDaoList(r);
           setShowLoading(false);
         }).catch((e) => {
-          setShowLoading(false);
+        setShowLoading(false);
         console.log(e);
         mutationCtx.toastError(e);
       })
@@ -502,7 +535,6 @@ const Selector = (props) => {
   const toggleNewDao = () => {
     setShowNewDaoModal(!showNewDaoModal);
   }
-
 
 
   return (
