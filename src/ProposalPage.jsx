@@ -158,10 +158,10 @@ export const Proposal = (props) => {
             <MDBBox className="h4-responsive black-text">{props.data.description}</MDBBox>
             <hr/>
             <div className="float-left text-muted h4-responsive">proposer</div>
-            <div className="float-right h4-responsive">
+            <MDBBox className="float-right h4-responsive" style={{width: '80%'}}>
               <a className="text-right" target="_blank"
                  href={stateCtx.config.network.explorerUrl + "/accounts/" + props.data.proposer.toLowerCase()}>{props.data.proposer.toLowerCase()}</a>
-            </div>
+            </MDBBox>
             <br/>
             <div className="clearfix"/>
             <div className="float-left text-muted h4-responsive">target</div>
@@ -382,7 +382,7 @@ const ProposalPage = () => {
           <MDBCard>
             <MDBCardBody className="text-left p-4 m-4">
               <MDBBox><b>Proposal DAO:</b> {dao}</MDBBox>
-              <MDBBox><b>Council:</b> {council.map((item,key) => (<span>{item}{" "}</span>))}</MDBBox>
+              <MDBBox><b>Council:</b> {council.map((item, key) => (<span>{item}{" "}</span>))}</MDBBox>
               <hr/>
               <MDBLink to={"/" + dao} className="btn-secondary text-center">BACK TO DAO</MDBLink>
             </MDBCardBody>
