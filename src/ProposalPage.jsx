@@ -159,7 +159,7 @@ export const Proposal = (props) => {
             <hr/>
             <div className="float-left text-muted h4-responsive">proposer</div>
             <MDBBox className="float-right h4-responsive" style={{width: '80%'}}>
-              <a className="text-right" target="_blank"
+              <a className="text-right float-right" target="_blank" style={{wordBreak: "break-word"}}
                  href={stateCtx.config.network.explorerUrl + "/accounts/" + props.data.proposer.toLowerCase()}>{props.data.proposer.toLowerCase()}</a>
             </MDBBox>
             <br/>
