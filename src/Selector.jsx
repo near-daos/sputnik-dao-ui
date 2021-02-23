@@ -192,7 +192,7 @@ const NewDao = (props) => {
   }
 
   const validateName = (field, name, showMessage) => {
-    const allowedChars = /^[0-9a-zA-Z_\-]*$/;
+    const allowedChars = /^(?=[0-9a-zA-Z])(?=.*[0-9a-zA-Z]$)(?!.*__.*)(?!.*--.*)[0-9a-zA-Z_\-]*$/;
     if (name && name.length >= 2 && name.length <=35 && allowedChars.test(name)) {
       return true;
     } else {
