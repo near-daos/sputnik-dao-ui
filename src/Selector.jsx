@@ -183,7 +183,7 @@ const NewDao = (props) => {
   }
 
   const validatePurpose = (field, name, showMessage) => {
-    if (name && name.length > 10 && name.length < 280) {
+    if (name && name.length >= 10 && name.length <= 280) {
       return true;
     } else {
       showMessage("Please enter between 10 and 280 chars", 'warning', field);
@@ -192,10 +192,11 @@ const NewDao = (props) => {
   }
 
   const validateName = (field, name, showMessage) => {
-    if (name && name.length > 3 && name.length < 30 && name.indexOf(' ') === -1) {
+    const allowedChars = /^[0-9a-zA-Z_\-]*$/;
+    if (name && name.length >= 2 && name.length <=35 && allowedChars.test(name)) {
       return true;
     } else {
-      showMessage("Please enter between 2 and 30 chars, no spaces, lowercase", 'warning', field);
+      showMessage("Please enter between 2 and 35 chars, lowercase characters (a-z), digits (0-9),(_-) can be used as separators ", 'warning', field);
       return false;
     }
   }
@@ -321,7 +322,7 @@ const NewDao = (props) => {
         <MDBModalBody>
 
           <MDBInput name="daoName" value={daoName.value}
-                    onChange={changeHandler} label="Enter DAO Name"
+                    onChange={changeHandler} label="Enter DAO Name (will be prefix of .sputnikdao.near)"
                     required group>
             <div className="invalid-feedback">
               {daoName.message}
