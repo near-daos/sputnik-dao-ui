@@ -155,7 +155,13 @@ export const Proposal = (props) => {
                                                         target="_blank"><MDBIcon icon="link"/></a> #{props.id}</div>
           <div className="clearfix"/>
           <MDBCardText>
-            <MDBBox className="h4-responsive black-text">{props.data.description}</MDBBox>
+            <MDBBox
+              className="h4-responsive black-text">{props.data.description.replace(new RegExp(/\/t\/[0-9]+$/ig), "")}</MDBBox>
+            {/\/t\/[0-9]+$/ig.test(props.data.description) ?
+              <a target="_blank"
+                 href={"https://gov.near.org" + props.data.description.match(new RegExp(/\/t\/[0-9]+$/ig))}
+                 rel="nofollow">https://gov.near.org{props.data.description.match(new RegExp(/\/t\/[0-9]+$/ig))}</a>
+              : null}
             <hr/>
             <div className="float-left text-muted h4-responsive">proposer</div>
             <MDBBox className="float-right h4-responsive" style={{width: '80%'}}>

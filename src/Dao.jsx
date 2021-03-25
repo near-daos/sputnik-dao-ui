@@ -75,6 +75,11 @@ const Dao = () => {
     valid: true,
     message: "",
   });
+  const [proposalDiscussion, setProposalDiscussion] = useState({
+    value: "",
+    valid: true,
+    message: "",
+  });
   const [proposalAmount, setProposalAmount] = useState({
     value: "",
     valid: true,
@@ -160,9 +165,9 @@ const Dao = () => {
     e.persist();
 
     const nearAccountValid = await accountExists(proposalTarget.value);
-
     let validateTarget = validateField("proposalTarget", proposalTarget.value);
     let validateDescription = validateField("proposalDescription", proposalDescription.value);
+    let validateDiscussion = validateField("proposalDiscussion", proposalDiscussion.value);
     let validateChangePurpose = validateField("changePurpose", changePurpose.value);
     let validateAmount = validateField("proposalAmount", proposalAmount.value);
 
@@ -203,6 +208,14 @@ const Dao = () => {
       e.target.proposalDescription.className += " is-valid";
     }
 
+    if (!validateDiscussion) {
+      e.target.proposalDiscussion.className += " is-invalid";
+      e.target.proposalDiscussion.classList.remove("is-valid");
+    } else {
+      e.target.proposalDiscussion.classList.remove("is-invalid");
+      e.target.proposalDiscussion.className += " is-valid";
+    }
+
 
     if (showPayout) {
       if (!validateAmount) {
@@ -224,7 +237,7 @@ const Dao = () => {
           await window.contract.add_proposal({
               proposal: {
                 target: e.target.proposalTarget.value,
-                description: e.target.proposalDescription.value,
+                description: (e.target.proposalDescription.value + " " + e.target.proposalDiscussion.value).trim(),
                 kind: {
                   type: e.target.proposalKind.value,
                   amount: amountYokto,
@@ -249,7 +262,7 @@ const Dao = () => {
           await window.contract.add_proposal({
               proposal: {
                 target: e.target.proposalTarget.value,
-                description: e.target.proposalDescription.value,
+                description: (e.target.proposalDescription.value + " " + e.target.proposalDiscussion.value).trim(),
                 kind: {
                   type: e.target.proposalKind.value,
                 }
@@ -272,7 +285,7 @@ const Dao = () => {
           await window.contract.add_proposal({
               proposal: {
                 target: e.target.proposalTarget.value,
-                description: e.target.proposalDescription.value,
+                description: (e.target.proposalDescription.value + " " + e.target.proposalDiscussion.value).trim(),
                 kind: {
                   type: 'ChangePurpose',
                   purpose: e.target.changePurpose.value,
@@ -298,7 +311,7 @@ const Dao = () => {
           await window.contract.add_proposal({
               proposal: {
                 target: e.target.proposalTarget.value,
-                description: e.target.proposalDescription.value,
+                description: (e.target.proposalDescription.value + " " + e.target.proposalDiscussion.value).trim(),
                 kind: {
                   type: 'ChangeVotePeriod',
                   vote_period: votePeriod,
@@ -487,10 +500,18 @@ const Dao = () => {
     }
   }
   const validateLongString = (field, name, showMessage) => {
-    if (name && name.length >= 3 && name.length <= 250) {
+    if (name && name.length >= 3 && name.length <= 240) {
       return true;
     } else {
-      showMessage(field + " > 3 and < 250 chars", 'warning', field);
+      showMessage("> 3 and < 240 chars", 'warning', field);
+      return false;
+    }
+  }
+  const validateProposalDiscussion = (field, name, showMessage) => {
+    if (name === '' || (name.length >= 3 && name.length <= 10 && /\/t\/[0-9]+$/ig.test(name))) {
+      return true;
+    } else {
+      showMessage("please use format `/t/000` and > 3 < 10 chars", 'warning', field);
       return false;
     }
   }
@@ -513,6 +534,8 @@ const Dao = () => {
         return validateString(field, value, showMessage.bind(this));
       case "proposalDescription":
         return validateLongString(field, value, showMessage.bind(this));
+      case "proposalDiscussion":
+        return validateProposalDiscussion(field, value, showMessage.bind(this));
       case "proposalAmount":
       case "votePeriod":
         return validateNumber(field, value, showMessage.bind(this));
@@ -565,19 +588,34 @@ const Dao = () => {
 
   const changeHandler = (event) => {
     if (event.target.name === "proposalTarget") {
-      setProposalTarget({value: event.target.value.toLowerCase(), valid: !!event.target.value});
+      setProposalTarget({
+        value: event.target.value.toLowerCase(),
+        valid: !!event.target.value,
+        message: proposalTarget.message
+      });
     }
     if (event.target.name === "proposalDescription") {
-      setProposalDescription({value: event.target.value, valid: !!event.target.value});
+      setProposalDescription({
+        value: event.target.value,
+        valid: !!event.target.value,
+        message: proposalDescription.message
+      });
+    }
+    if (event.target.name === "proposalDiscussion") {
+      setProposalDiscussion({
+        value: event.target.value,
+        valid: !!event.target.value,
+        message: proposalDiscussion.message
+      });
     }
     if (event.target.name === "proposalAmount") {
-      setProposalAmount({value: event.target.value, valid: !!event.target.value});
+      setProposalAmount({value: event.target.value, valid: !!event.target.value, message: proposalAmount.message});
     }
     if (event.target.name === "votePeriod") {
-      setVotePeriod({value: event.target.value, valid: !!event.target.value});
+      setVotePeriod({value: event.target.value, valid: !!event.target.value, message: votePeriod.message});
     }
     if (event.target.name === "changePurpose") {
-      setChangePurpose({value: event.target.value, valid: !!event.target.value});
+      setChangePurpose({value: event.target.value, valid: !!event.target.value, message: changePurpose.message});
     }
 
     if (!validateField(event.target.name, event.target.value)) {
@@ -592,16 +630,19 @@ const Dao = () => {
     if (message) {
       switch (field) {
         case "proposalKind":
-          setProposalKind({message: message});
+          setProposalKind(prevState => ({...prevState, message: message}));
           break;
         case "proposalTarget":
-          setProposalTarget({message: message});
+          setProposalTarget(prevState => ({...prevState, message: message}));
           break;
         case "proposalDescription":
-          setProposalDescription({message: message});
+          setProposalDescription(prevState => ({...prevState, message: message}));
+          break;
+        case "proposalDiscussion":
+          setProposalDiscussion(prevState => ({...prevState, message: message}));
           break;
         case "proposalAmount":
-          setProposalAmount({message: message});
+          setProposalAmount(prevState => ({...prevState, message: message}));
           break;
       }
     }
@@ -939,11 +980,20 @@ const Dao = () => {
                     </div>
                   </MDBInput>
                   <MDBInput name="proposalDescription" value={proposalDescription.value} onChange={changeHandler}
-                            required label="Job/proposal description (max 250 chars)" group>
+                            required label="Job/proposal description (max 240 chars)" group>
                     <div className="invalid-feedback">
                       {proposalDescription.message}
                     </div>
                   </MDBInput>
+                  <MDBInput name="proposalDiscussion" value={proposalDiscussion.value} onChange={changeHandler}
+                            required label="Link to the discussion, format: /t/000 (max 10 chars)" group>
+                    <div className="invalid-feedback">
+                      {proposalDiscussion.message}
+                    </div>
+                  </MDBInput>
+                  <MDBBox className="text-muted font-small">create a discussion (before submitting a proposal) here: <a
+                    href="https://gov.near.org/c/10"
+                    target="_blank">https://gov.near.org/c/10</a> and enter a short link above</MDBBox>
                   {showPayout ?
                     <MDBInput value={proposalAmount.value} name="proposalAmount" onChange={changeHandler} required
                               label="Payout in NEAR" group>
@@ -973,11 +1023,6 @@ const Dao = () => {
                     name="bondAmount" disabled group/>
                 </MDBModalBody>
                 <MDBModalFooter className="justify-content-center">
-                  <MDBBox className="font-small">For more details on your proposal or to start the discussion, please
-                    post in <a
-                      href="https://gov.near.org/c/community/10"
-                      target="_blank">https://gov.near.org/c/community/10</a>
-                  </MDBBox>
                   <MDBBtn color="unique" type="submit">
                     Submit
                     {showSpinner ?

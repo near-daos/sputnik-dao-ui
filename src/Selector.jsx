@@ -202,10 +202,10 @@ const NewDao = (props) => {
   }
 
   const validateAmount = (field, name, showMessage) => {
-    if (name && !isNaN(name) && name >= 35) {
+    if (name && !isNaN(name) && name >= 3.5) {
       return true;
     } else {
-      showMessage("Minimum amount is 35 NEAR", 'warning', field);
+      showMessage("Minimum amount is 3.5 NEAR", 'warning', field);
       return false;
     }
   }
@@ -370,7 +370,7 @@ const NewDao = (props) => {
 
           <MDBInput
             value={amount.value}
-            onChange={changeHandler} label="Amount to transfer to the DAO (minimum 35 NEAR for storage)"
+            onChange={changeHandler} label="Amount to transfer to the DAO (minimum 3.5 NEAR for storage)"
             name="amount" group>
             <div className="invalid-feedback">
               {amount.message}
@@ -560,7 +560,7 @@ const Selector = (props) => {
           <hr/>
           <MDBBtn color="red" onClick={toggleNewDao}
                   className="">CREATE NEW DAO</MDBBtn>
-          <MDBBox className="text-muted text-center">Attention! Required minimum 35 NEAR for the storage.</MDBBox>
+          <MDBBox className="text-muted text-center">Attention! Required minimum 3.5 NEAR for the storage.</MDBBox>
         </MDBCardHeader>
         {showLoading ? <Loading/> : null}
         <MDBCardBody className="text-center">
