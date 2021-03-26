@@ -156,11 +156,11 @@ export const Proposal = (props) => {
           <div className="clearfix"/>
           <MDBCardText>
             <MDBBox
-              className="h4-responsive black-text">{props.data.description.replace(new RegExp(/\/t\/[0-9]+$/ig), "")}</MDBBox>
-            {/\/t\/[0-9]+$/ig.test(props.data.description) ?
+              className="h4-responsive black-text">{props.data.description.split('/t/')[0]}</MDBBox>
+            {props.data.description.split('/t/')[1] ?
               <a target="_blank"
-                 href={"https://gov.near.org" + props.data.description.match(new RegExp(/\/t\/[0-9]+$/ig))}
-                 rel="nofollow">https://gov.near.org{props.data.description.match(new RegExp(/\/t\/[0-9]+$/ig))}</a>
+                 href={"https://gov.near.org/t/" + props.data.description.split('/t/')[1]}
+                 rel="nofollow">{"https://gov.near.org/t/" + props.data.description.split('/t/')[1]}</a>
               : null}
             <hr/>
             <div className="float-left text-muted h4-responsive">proposer</div>

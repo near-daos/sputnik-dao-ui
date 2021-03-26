@@ -25,12 +25,20 @@ import {
 import {useGlobalMutation, useGlobalState} from './utils/container'
 import {Decimal} from 'decimal.js';
 import Selector from "./Selector";
-import {convertDuration, proposalsReload, timestampToReadable, updatesJsonUrl, yoktoNear} from './utils/funcs'
+import {
+  convertDuration,
+  proposalsReload,
+  timestampToReadable,
+  updatesJsonUrl,
+  yoktoNear,
+  parseForumUrl
+} from './utils/funcs'
 import getConfig from "./config";
 import * as nearApi from "near-api-js";
 import {Contract} from "near-api-js";
 import {Proposal} from './ProposalPage';
 import Loading from "./utils/Loading";
+import * as url from "url";
 
 
 const Dao = () => {
@@ -237,7 +245,7 @@ const Dao = () => {
           await window.contract.add_proposal({
               proposal: {
                 target: e.target.proposalTarget.value,
-                description: (e.target.proposalDescription.value + " " + e.target.proposalDiscussion.value).trim(),
+                description: (e.target.proposalDescription.value + " " + parseForumUrl(e.target.proposalDiscussion.value)).trim(),
                 kind: {
                   type: e.target.proposalKind.value,
                   amount: amountYokto,
@@ -262,7 +270,7 @@ const Dao = () => {
           await window.contract.add_proposal({
               proposal: {
                 target: e.target.proposalTarget.value,
-                description: (e.target.proposalDescription.value + " " + e.target.proposalDiscussion.value).trim(),
+                description: (e.target.proposalDescription.value + " " + parseForumUrl(e.target.proposalDiscussion.value)).trim(),
                 kind: {
                   type: e.target.proposalKind.value,
                 }
@@ -285,7 +293,7 @@ const Dao = () => {
           await window.contract.add_proposal({
               proposal: {
                 target: e.target.proposalTarget.value,
-                description: (e.target.proposalDescription.value + " " + e.target.proposalDiscussion.value).trim(),
+                description: (e.target.proposalDescription.value + " " + parseForumUrl(e.target.proposalDiscussion.value)).trim(),
                 kind: {
                   type: 'ChangePurpose',
                   purpose: e.target.changePurpose.value,
@@ -311,7 +319,7 @@ const Dao = () => {
           await window.contract.add_proposal({
               proposal: {
                 target: e.target.proposalTarget.value,
-                description: (e.target.proposalDescription.value + " " + e.target.proposalDiscussion.value).trim(),
+                description: (e.target.proposalDescription.value + " " + parseForumUrl(e.target.proposalDiscussion.value)).trim(),
                 kind: {
                   type: 'ChangeVotePeriod',
                   vote_period: votePeriod,
@@ -507,14 +515,29 @@ const Dao = () => {
       return false;
     }
   }
+
+
+  const validateProposalDiscussion = (field, name, showMessage) => {
+    let categories = parseForumUrl(name);
+    if (categories === false) {
+      showMessage("Wrong link format", 'warning', field);
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  /*
   const validateProposalDiscussion = (field, name, showMessage) => {
     if (name === '' || (name.length >= 3 && name.length <= 10 && /\/t\/[0-9]+$/ig.test(name))) {
       return true;
     } else {
-      showMessage("please use format `/t/000` and > 3 < 10 chars", 'warning', field);
+      showMessage("Please copy / paste the forum link ", 'warning', field);
       return false;
     }
   }
+  */
+
 
   const validateNumber = (field, name, showMessage) => {
     if (name && !isNaN(name) && name.length > 0) {
@@ -724,6 +747,17 @@ const Dao = () => {
     mutationCtx.updateConfig({filter: switched})
   }
 
+  const detectLink = (string) => {
+    let urlRegex = /(((https?:\/\/)|(www\.))[^\s]+)/g;
+
+    if (!urlRegex.test(string)) {
+      return false;
+    } else {
+      console.log(string.match(urlRegex))
+      return string.match(urlRegex);
+    }
+  }
+
 
   return (
     <MDBView className="w-100 h-100" style={{minHeight: "100vh"}}>
@@ -770,7 +804,14 @@ const Dao = () => {
                               </li>
                               <li>DAO: {stateCtx.config.contract}</li>
                               <li>Bond: Ⓝ {bond ? (new Decimal(bond).div(yoktoNear)).toString() : ''}</li>
-                              <li>Purpose: {daoPurpose}</li>
+                              <li>Purpose:{" "}
+                                {
+                                  daoPurpose.split(" ").map((item, key) => (
+                                    /(((https?:\/\/)|(www\.))[^\s]+)/g.test(item) ?
+                                      <a target="_blank" href={item}>{item}{" "}</a> : <>{item}{" "}</>
+                                  ))
+                                }
+                              </li>
                               <li>Vote Period: {daoVotePeriod ? timestampToReadable(daoVotePeriod) : ''}</li>
                               <li>DAO Funds: Ⓝ {daoState ? daoState : ''}</li>
                             </ul>
@@ -986,14 +1027,14 @@ const Dao = () => {
                     </div>
                   </MDBInput>
                   <MDBInput name="proposalDiscussion" value={proposalDiscussion.value} onChange={changeHandler}
-                            required label="Link to the discussion, format: /t/000 (max 10 chars)" group>
+                            required label="Please copy and paste the forum link here" group>
                     <div className="invalid-feedback">
                       {proposalDiscussion.message}
                     </div>
                   </MDBInput>
                   <MDBBox className="text-muted font-small">create a discussion (before submitting a proposal) here: <a
                     href="https://gov.near.org/c/10"
-                    target="_blank">https://gov.near.org/c/10</a> and enter a short link above</MDBBox>
+                    target="_blank">https://gov.near.org/c/10</a> and use above 👆</MDBBox>
                   {showPayout ?
                     <MDBInput value={proposalAmount.value} name="proposalAmount" onChange={changeHandler} required
                               label="Payout in NEAR" group>
@@ -1019,7 +1060,7 @@ const Dao = () => {
                     </MDBInput>
                     : null}
                   <MDBInput
-                    value={bond ? "Bond: " + (new Decimal(bond.toString()).div(yoktoNear).toFixed(0)) + " NEAR (amount to pay now)" : null}
+                    value={bond ? "Bond: " + (new Decimal(bond.toString()).div(yoktoNear).toFixed(2)) + " NEAR (amount to pay now)" : null}
                     name="bondAmount" disabled group/>
                 </MDBModalBody>
                 <MDBModalFooter className="justify-content-center">
