@@ -236,7 +236,7 @@ const Dao = () => {
     }
 
     if (showPayout) {
-      if (e.target.proposalKind.value !== 'false' && nearAccountValid && validateTarget && validateDescription && validateAmount) {
+      if (e.target.proposalKind.value !== 'false' && nearAccountValid && validateTarget && validateDescription && validateAmount && validateDiscussion) {
         try {
           setShowSpinner(true);
           const amount = new Decimal(e.target.proposalAmount.value);
