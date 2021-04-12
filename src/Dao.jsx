@@ -519,25 +519,14 @@ const Dao = () => {
 
   const validateProposalDiscussion = (field, name, showMessage) => {
     let categories = parseForumUrl(name);
-    if (categories === false) {
+    /* Hardcoded exclusion of rucommunity.sputnikdao.near from field validation */
+    if (categories === false && stateCtx.config.contract !== 'rucommunity.sputnikdao.near') {
       showMessage("Wrong link format", 'warning', field);
       return false;
     } else {
       return true;
     }
   }
-
-  /*
-  const validateProposalDiscussion = (field, name, showMessage) => {
-    if (name === '' || (name.length >= 3 && name.length <= 10 && /\/t\/[0-9]+$/ig.test(name))) {
-      return true;
-    } else {
-      showMessage("Please copy / paste the forum link ", 'warning', field);
-      return false;
-    }
-  }
-  */
-
 
   const validateNumber = (field, name, showMessage) => {
     if (name && !isNaN(name) && name.length > 0) {
