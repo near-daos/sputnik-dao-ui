@@ -235,6 +235,8 @@ const Dao = () => {
       }
     }
 
+    const parseForum = parseForumUrl(e.target.proposalDiscussion.value);
+
     if (showPayout) {
       if (e.target.proposalKind.value !== 'false' && nearAccountValid && validateTarget && validateDescription && validateAmount && validateDiscussion) {
         try {
@@ -245,7 +247,7 @@ const Dao = () => {
           await window.contract.add_proposal({
               proposal: {
                 target: e.target.proposalTarget.value,
-                description: (e.target.proposalDescription.value + " " + parseForumUrl(e.target.proposalDiscussion.value)).trim(),
+                description: parseForum ? (e.target.proposalDescription.value + " " + parseForum).trim() : e.target.proposalDescription.value,
                 kind: {
                   type: e.target.proposalKind.value,
                   amount: amountYokto,
@@ -254,6 +256,7 @@ const Dao = () => {
             },
             new Decimal("30000000000000").toString(), bond.toString(),
           )
+
         } catch (e) {
           console.log(e);
           setShowError(e);
@@ -270,7 +273,7 @@ const Dao = () => {
           await window.contract.add_proposal({
               proposal: {
                 target: e.target.proposalTarget.value,
-                description: (e.target.proposalDescription.value + " " + parseForumUrl(e.target.proposalDiscussion.value)).trim(),
+                description: parseForum ? (e.target.proposalDescription.value + " " + parseForum).trim() : e.target.proposalDescription.value,
                 kind: {
                   type: e.target.proposalKind.value,
                 }
@@ -293,7 +296,7 @@ const Dao = () => {
           await window.contract.add_proposal({
               proposal: {
                 target: e.target.proposalTarget.value,
-                description: (e.target.proposalDescription.value + " " + parseForumUrl(e.target.proposalDiscussion.value)).trim(),
+                description: parseForum ? (e.target.proposalDescription.value + " " + parseForum).trim() : e.target.proposalDescription.value,
                 kind: {
                   type: 'ChangePurpose',
                   purpose: e.target.changePurpose.value,
@@ -319,7 +322,7 @@ const Dao = () => {
           await window.contract.add_proposal({
               proposal: {
                 target: e.target.proposalTarget.value,
-                description: (e.target.proposalDescription.value + " " + parseForumUrl(e.target.proposalDiscussion.value)).trim(),
+                description: parseForum ? (e.target.proposalDescription.value + " " + parseForum).trim() : e.target.proposalDescription.value,
                 kind: {
                   type: 'ChangeVotePeriod',
                   vote_period: votePeriod,
