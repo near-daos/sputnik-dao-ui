@@ -523,7 +523,7 @@ const Dao = () => {
   const validateProposalDiscussion = (field, name, showMessage) => {
     let categories = parseForumUrl(name);
     /* Hardcoded exclusion of rucommunity.sputnikdao.near from field validation */
-    if (categories === name && stateCtx.config.contract !== 'daotest1.dev-1610115292586-3217148') {
+    if (categories === name && stateCtx.config.contract !== 'rucommunity.sputnikdao.near') {
       showMessage("Wrong link format", 'warning', field);
       return false;
     } else {
