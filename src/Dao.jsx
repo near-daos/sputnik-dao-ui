@@ -247,7 +247,7 @@ const Dao = () => {
           await window.contract.add_proposal({
               proposal: {
                 target: e.target.proposalTarget.value,
-                description: parseForum ? (e.target.proposalDescription.value + " " + parseForum).trim() : e.target.proposalDescription.value,
+                description: (e.target.proposalDescription.value + " " + parseForum).trim(),
                 kind: {
                   type: e.target.proposalKind.value,
                   amount: amountYokto,
@@ -273,7 +273,7 @@ const Dao = () => {
           await window.contract.add_proposal({
               proposal: {
                 target: e.target.proposalTarget.value,
-                description: parseForum ? (e.target.proposalDescription.value + " " + parseForum).trim() : e.target.proposalDescription.value,
+                description: (e.target.proposalDescription.value + " " + parseForum).trim(),
                 kind: {
                   type: e.target.proposalKind.value,
                 }
@@ -296,7 +296,7 @@ const Dao = () => {
           await window.contract.add_proposal({
               proposal: {
                 target: e.target.proposalTarget.value,
-                description: parseForum ? (e.target.proposalDescription.value + " " + parseForum).trim() : e.target.proposalDescription.value,
+                description: (e.target.proposalDescription.value + " " + parseForum).trim(),
                 kind: {
                   type: 'ChangePurpose',
                   purpose: e.target.changePurpose.value,
@@ -322,7 +322,7 @@ const Dao = () => {
           await window.contract.add_proposal({
               proposal: {
                 target: e.target.proposalTarget.value,
-                description: parseForum ? (e.target.proposalDescription.value + " " + parseForum).trim() : e.target.proposalDescription.value,
+                description: (e.target.proposalDescription.value + " " + parseForum).trim(),
                 kind: {
                   type: 'ChangeVotePeriod',
                   vote_period: votePeriod,
@@ -523,7 +523,7 @@ const Dao = () => {
   const validateProposalDiscussion = (field, name, showMessage) => {
     let categories = parseForumUrl(name);
     /* Hardcoded exclusion of rucommunity.sputnikdao.near from field validation */
-    if (categories === false && stateCtx.config.contract !== 'rucommunity.sputnikdao.near') {
+    if (categories === name && stateCtx.config.contract !== 'daotest1.dev-1610115292586-3217148') {
       showMessage("Wrong link format", 'warning', field);
       return false;
     } else {

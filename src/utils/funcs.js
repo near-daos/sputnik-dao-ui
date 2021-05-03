@@ -40,7 +40,7 @@ export const parseForumUrl = (url) => {
   }
 
   if (category === null) {
-    return false;
+    return url;
   } else {
     return subCategory === null ? "/t/" + category : "/t/" + category + "/" + subCategory;
   }
