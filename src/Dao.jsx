@@ -353,6 +353,9 @@ const Dao = () => {
           mutationCtx.updateConfig({
             lastShownProposal: number
           })
+          if (number >= 100) {
+            number = 100;
+          }
           window.contract.get_proposals({from_index: 0, limit: number})
             .then(list => {
               const t = []
