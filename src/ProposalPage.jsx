@@ -197,7 +197,7 @@ export const Proposal = (props) => {
             </MDBTooltip>
             : null}
 
-          {(props.data.proposer === window.walletConnection.getAccountId() && convertDuration(props.data.vote_period_end) < new Date() && props.data.status === 'Vote') ?
+          {(window.walletConnection.getAccountId() && convertDuration(props.data.vote_period_end) < new Date() && props.data.status === 'Vote') ?
             <MDBTooltip
               tag="span"
               placement="top"
