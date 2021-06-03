@@ -353,15 +353,19 @@ const Dao = () => {
           mutationCtx.updateConfig({
             lastShownProposal: number
           })
+          let fromIndex = 0;
           if (number >= 100) {
-            number = 100;
+            fromIndex = 100;
           }
-          window.contract.get_proposals({from_index: 0, limit: number})
+          if (number >= 200) {
+            fromIndex = 200;
+          }
+          window.contract.get_proposals({from_index: fromIndex, limit: 100})
             .then(list => {
               const t = []
               list.map((item, key) => {
                 const t2 = {}
-                Object.assign(t2, {key: key}, item);
+                Object.assign(t2, {key: fromIndex + key}, item);
                 t.push(t2);
               })
               setProposals(t);
