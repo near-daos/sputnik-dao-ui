@@ -345,38 +345,42 @@ const Dao = () => {
   const [firstRun, setFirstRun] = useState(true);
 
 
-  const getProposals = () => {
-    if (stateCtx.config.contract !== "") {
-      window.contract.get_num_proposals()
-        .then(number => {
-          setNumberProposals(number);
-          mutationCtx.updateConfig({
-            lastShownProposal: number
-          })
-          let fromIndex = 0;
-          if (number >= 100) {
-            fromIndex = 100;
-          }
-          if (number >= 200) {
-            fromIndex = 200;
-          }
-          window.contract.get_proposals({from_index: fromIndex, limit: 100})
-            .then(list => {
-              const t = []
-              list.map((item, key) => {
-                const t2 = {}
-                Object.assign(t2, {key: fromIndex + key}, item);
-                t.push(t2);
-              })
-              setProposals(t);
-              setShowLoading(false);
-            });
-        }).catch((e) => {
-        console.log(e);
-        setShowError(e);
-        setShowLoading(false);
-      })
+  async function getProposals() {
+    let limit = 100;
+    let fromIndex = 0;
+    const numberProposals = await window.contract.get_num_proposals();
+    console.log(numberProposals);
+    setNumberProposals(numberProposals);
+    mutationCtx.updateConfig({
+      lastShownProposal: numberProposals
+    })
+    let proposals = [];
+
+    if (numberProposals > 100) {
+      let pages = new Decimal(numberProposals / limit).toFixed(0);
+      let i;
+      for (i = 0; i <= pages; i++) {
+        fromIndex = limit * i;
+        let proposals2;
+        try {
+          proposals2 = await window.contract.get_proposals({from_index: fromIndex, limit: limit})
+        } catch (e) {
+          console.log(e)
+        }
+        Array.prototype.push.apply(proposals, proposals2);
+      }
+    } else {
+      proposals = await window.contract.get_proposals({from_index: fromIndex, limit: limit})
     }
+
+    const t = []
+    proposals.map((item, key) => {
+      const t2 = {}
+      Object.assign(t2, {key: key}, item);
+      t.push(t2);
+    })
+
+    return t;
   }
 
 
@@ -388,51 +392,28 @@ const Dao = () => {
   }
 
 
-  /*
-  useEffect(() => {
-    if (!firstRun) {
-      const interval = setInterval(() => {
-        fetchUrl().then((json) => {
-          if (stateCtx.config.lastJsonData === 0 || stateCtx.config.lastJsonData !== json) {
-            mutationCtx.updateConfig({
-              lastJsonData: json !== undefined ? json : 0,
-            })
-          }
-        }).catch((e) => {
-          console.log(e);
-        });
-      }, proposalsReload);
-    } else {
-      setFirstRun(false);
-      getProposals();
-    }
-  }, [stateCtx.config.contract, firstRun]);
-
-
   useEffect(
-    () => {
-      getProposals();
-    },
-    [stateCtx.config.contract, stateCtx.config.lastJsonData]
-  )
-  */
-
-
-  useEffect(
-    () => {
+    async () => {
       if (!firstRun) {
-        const interval = setInterval(() => {
+        const interval = setInterval(async () => {
           console.log('loading proposals')
-          getProposals();
+          getProposals().then(r => {
+            setProposals(r);
+            setShowLoading(false);
+          });
         }, proposalsReload);
         return () => clearInterval(interval);
       } else {
-        getProposals();
+        getProposals().then(r => {
+          setProposals(r);
+          setShowLoading(false);
+        });
         setFirstRun(false);
       }
     },
     [stateCtx.config.contract, firstRun]
   )
+
 
   useEffect(
     () => {

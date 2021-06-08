@@ -24,6 +24,10 @@ import Loading from "./utils/Loading";
 import * as nearApi from "near-api-js";
 import getConfig from "./config";
 
+const nearConfig = getConfig(process.env.NODE_ENV || 'development')
+const provider = new nearApi.providers.JsonRpcProvider(nearConfig.nodeUrl);
+const connection = new nearApi.Connection(nearConfig.nodeUrl, provider, {});
+
 
 const NewDao = (props) => {
   const [showSpinner, setShowSpinner] = useState(false);
@@ -193,7 +197,7 @@ const NewDao = (props) => {
 
   const validateName = (field, name, showMessage) => {
     const allowedChars = /^(?=[0-9a-zA-Z])(?=.*[0-9a-zA-Z]$)(?!.*__.*)(?!.*--.*)[0-9a-zA-Z_\-]*$/;
-    if (name && name.length >= 2 && name.length <=35 && allowedChars.test(name)) {
+    if (name && name.length >= 2 && name.length <= 35 && allowedChars.test(name)) {
       return true;
     } else {
       showMessage("Please enter between 2 and 35 chars, lowercase characters (a-z), digits (0-9),(_-) can be used as separators ", 'warning', field);
@@ -398,9 +402,6 @@ const NewDao = (props) => {
 
 
 async function getDaoState(dao) {
-  const nearConfig = getConfig(process.env.NODE_ENV || 'development')
-  const provider = new nearApi.providers.JsonRpcProvider(nearConfig.nodeUrl);
-  const connection = new nearApi.Connection(nearConfig.nodeUrl, provider, {});
   try {
     const state = await new nearApi.Account(connection, dao).state();
     const amountYokto = new Decimal(state.amount);
