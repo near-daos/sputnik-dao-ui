@@ -9,7 +9,7 @@ import { ProposalList } from "@/components/ProposalList";
 import { CreateProposal } from "@/components/CreateProposal";
 import { SiteHeader, SiteFooter } from "@/components/Chrome";
 import { usePolicy } from "@/hooks/useDao";
-import { getUserRoles } from "@/lib/sputnik";
+import { canAddAnyProposal, getUserRoles } from "@/lib/sputnik";
 import { addRecentDao } from "@/lib/recentDaos";
 
 export default function DaoPage() {
@@ -27,17 +27,25 @@ export default function DaoPage() {
     : null;
 
   const policyQ = usePolicy(daoId);
-  const policy = policyQ.data?.result;
+  const policy = policyQ.data?.result ?? null;
 
-  const userRoles = connectedAccountId && policy
-    ? getUserRoles(policy, connectedAccountId)
-    : [];
+  const userRoles =
+    connectedAccountId && policy
+      ? getUserRoles(policy, connectedAccountId)
+      : [];
 
-  const isMember =
-    connectedAccountId !== null &&
-    userRoles.some((r) => r !== "all" && r.toLowerCase() !== "everyone");
+  const canCreate =
+    !!connectedAccountId &&
+    !!policy &&
+    canAddAnyProposal(policy, connectedAccountId);
 
-  const canVote = connectedAccountId !== null && userRoles.length > 0;
+  const createDisabledTooltip = !connectedAccountId
+    ? "Connect your wallet to create proposals."
+    : !policy
+      ? "Loading DAO policy…"
+      : !canCreate
+        ? `${connectedAccountId} isn't in a role with permission to create proposals in this DAO. Sign in as a voting member.`
+        : null;
 
   return (
     <div className="flex min-h-screen flex-col bg-muted/40 w-full">
@@ -63,7 +71,7 @@ export default function DaoPage() {
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-card p-4">
             <div className="text-sm">
               {connectedAccountId ? (
-                canVote ? (
+                userRoles.length > 0 ? (
                   <>
                     Signed in as{" "}
                     <span className="font-medium">{connectedAccountId}</span> ·
@@ -76,7 +84,7 @@ export default function DaoPage() {
                   <>
                     <span className="font-medium">{connectedAccountId}</span>{" "}
                     is not a member of this DAO. You can view proposals but
-                    cannot vote.
+                    cannot vote or create them.
                   </>
                 )
               ) : (
@@ -84,20 +92,20 @@ export default function DaoPage() {
               )}
             </div>
 
-            {connectedAccountId && isMember && (
-              <CreateProposal
-                daoId={daoId}
-                proposalBondYocto={policy.proposal_bond}
-                policy={policy}
-              />
-            )}
+            <CreateProposal
+              daoId={daoId}
+              proposalBondYocto={policy.proposal_bond}
+              policy={policy}
+              disabled={!canCreate}
+              disabledTooltip={createDisabledTooltip}
+            />
           </div>
         )}
 
         <ProposalList
           daoId={daoId}
           connectedAccount={connectedAccountId}
-          canVote={canVote}
+          policy={policy}
         />
       </main>
 

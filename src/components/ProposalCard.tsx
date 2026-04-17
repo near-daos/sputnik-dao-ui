@@ -4,18 +4,20 @@ import Link from "next/link";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useActProposal } from "@/hooks/useDao";
 import {
+  canActOnProposalKind,
   proposalKindLabel,
+  type Policy,
   type Proposal,
   type ProposalStatus,
   type VoteValue,
 } from "@/lib/sputnik";
 import { formatTimestampNs, shortenAccount } from "@/lib/near";
 import { ProposalDescription } from "@/components/ProposalDescription";
+import { ActionButton } from "@/components/ActionButton";
 
 export function StatusBadge({ status }: { status: ProposalStatus }) {
   switch (status) {
@@ -66,14 +68,14 @@ export function ProposalCard({
   daoId,
   proposal,
   connectedAccount,
-  canVote,
+  policy,
   detailed = false,
   linkToDetail = false,
 }: {
   daoId: string;
   proposal: Proposal;
   connectedAccount: string | null;
-  canVote: boolean;
+  policy: Policy | null;
   detailed?: boolean;
   linkToDetail?: boolean;
 }) {
@@ -88,6 +90,50 @@ export function ProposalCard({
   const totals = voteTotals(proposal);
   const myVote = connectedAccount ? proposal.votes[connectedAccount] : null;
   const kindName = proposalKindLabel(proposal.kind);
+  const isInProgress = proposal.status === "InProgress";
+
+  type VoteButtonState =
+    | { kind: "hidden" }
+    | { kind: "enabled" }
+    | { kind: "disabled"; tooltip: string };
+
+  const voteButtonState = (action: "VoteApprove" | "VoteReject"): VoteButtonState => {
+    if (myVote) return { kind: "hidden" };
+    if (!isInProgress) {
+      return {
+        kind: "disabled",
+        tooltip: `Voting is closed — this proposal is ${proposal.status}.`,
+      };
+    }
+    if (!connectedAccount) {
+      return {
+        kind: "disabled",
+        tooltip: "Connect your wallet to vote on this proposal.",
+      };
+    }
+    if (!policy) {
+      return { kind: "disabled", tooltip: "Loading DAO policy…" };
+    }
+    const allowed = canActOnProposalKind(
+      policy,
+      connectedAccount,
+      proposal.kind,
+      action,
+    );
+    if (!allowed) {
+      const verb = action === "VoteApprove" ? "approve" : "reject";
+      return {
+        kind: "disabled",
+        tooltip: `Your account isn't in a role with permission to ${verb} ${kindName} proposals in this DAO. Sign in as a voting member to enable this action.`,
+      };
+    }
+    return { kind: "enabled" };
+  };
+
+  const approveState = voteButtonState("VoteApprove");
+  const rejectState = voteButtonState("VoteReject");
+  const showVoteButtons =
+    approveState.kind !== "hidden" || rejectState.kind !== "hidden";
 
   const idLabel = (
     <span className="text-sm font-medium">#{proposal.id}</span>
@@ -192,24 +238,40 @@ export function ProposalCard({
             )}
           </div>
 
-          {proposal.status === "InProgress" && canVote && !myVote && (
+          {showVoteButtons && (
             <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={act.isPending && busy}
-                onClick={() => onVote("VoteApprove")}
-              >
-                Approve
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={act.isPending && busy}
-                onClick={() => onVote("VoteReject")}
-              >
-                Reject
-              </Button>
+              {approveState.kind !== "hidden" && (
+                <ActionButton
+                  onClick={() => onVote("VoteApprove")}
+                  disabled={
+                    approveState.kind === "disabled" ||
+                    (act.isPending && busy)
+                  }
+                  disabledTooltip={
+                    approveState.kind === "disabled"
+                      ? approveState.tooltip
+                      : null
+                  }
+                >
+                  Approve
+                </ActionButton>
+              )}
+              {rejectState.kind !== "hidden" && (
+                <ActionButton
+                  onClick={() => onVote("VoteReject")}
+                  disabled={
+                    rejectState.kind === "disabled" ||
+                    (act.isPending && busy)
+                  }
+                  disabledTooltip={
+                    rejectState.kind === "disabled"
+                      ? rejectState.tooltip
+                      : null
+                  }
+                >
+                  Reject
+                </ActionButton>
+              )}
             </div>
           )}
         </div>

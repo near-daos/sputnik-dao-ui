@@ -9,7 +9,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ProposalCard } from "@/components/ProposalCard";
 import { SiteHeader, SiteFooter } from "@/components/Chrome";
 import { useProposal, usePolicy } from "@/hooks/useDao";
-import { getUserRoles } from "@/lib/sputnik";
 
 export default function ProposalDetailPage() {
   const params = useParams<{ daoId: string; proposalId: string }>();
@@ -26,13 +25,7 @@ export default function ProposalDetailPage() {
 
   const proposalQ = useProposal(daoId, validId ? proposalId : -1);
   const policyQ = usePolicy(daoId);
-  const policy = policyQ.data?.result;
-
-  const userRoles =
-    connectedAccountId && policy
-      ? getUserRoles(policy, connectedAccountId)
-      : [];
-  const canVote = connectedAccountId !== null && userRoles.length > 0;
+  const policy = policyQ.data?.result ?? null;
 
   const proposal = proposalQ.data?.result;
 
@@ -80,7 +73,7 @@ export default function ProposalDetailPage() {
             daoId={daoId}
             proposal={proposal}
             connectedAccount={connectedAccountId}
-            canVote={canVote}
+            policy={policy}
             detailed
           />
         )}
