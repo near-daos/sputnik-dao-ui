@@ -34,3 +34,53 @@ export function formatTimestampNs(ns: string | number): string {
   const ms = Number(nsBig / BigInt(1_000_000));
   return new Date(ms).toLocaleString();
 }
+
+const TGAS_DECIMALS = 12;
+
+export function parseTGasToGasUnits(tgas: string): string {
+  const trimmed = tgas.trim();
+  if (!trimmed) return "0";
+  const [intPart, fracPart = ""] = trimmed.split(".");
+  const paddedFrac = fracPart
+    .padEnd(TGAS_DECIMALS, "0")
+    .slice(0, TGAS_DECIMALS);
+  const combined = (intPart + paddedFrac).replace(/^0+/, "");
+  return combined || "0";
+}
+
+export function formatGasUnitsAsTGas(gasUnits: string, maxFracDigits = 3): string {
+  if (!gasUnits) return "0";
+  const padded = gasUnits.padStart(TGAS_DECIMALS + 1, "0");
+  const intPart =
+    padded.slice(0, padded.length - TGAS_DECIMALS).replace(/^0+/, "") || "0";
+  const fracPart = padded
+    .slice(padded.length - TGAS_DECIMALS)
+    .replace(/0+$/, "");
+  const fracTrimmed = fracPart.slice(0, maxFracDigits);
+  return fracTrimmed ? `${intPart}.${fracTrimmed}` : intPart;
+}
+
+// Browser-safe base64 of arbitrary Unicode text (btoa only accepts Latin-1).
+export function base64EncodeUtf8(text: string): string {
+  if (typeof window === "undefined") {
+    return Buffer.from(text, "utf8").toString("base64");
+  }
+  const bytes = new TextEncoder().encode(text);
+  let binary = "";
+  for (const b of bytes) binary += String.fromCharCode(b);
+  return btoa(binary);
+}
+
+export function base64DecodeUtf8(b64: string): string | null {
+  try {
+    if (typeof window === "undefined") {
+      return Buffer.from(b64, "base64").toString("utf8");
+    }
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  } catch {
+    return null;
+  }
+}
