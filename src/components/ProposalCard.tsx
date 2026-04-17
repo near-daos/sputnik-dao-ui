@@ -20,6 +20,10 @@ import {
 import { formatTimestampNs, shortenAccount } from "@/lib/near";
 import { ProposalDescription } from "@/components/ProposalDescription";
 import { ActionButton } from "@/components/ActionButton";
+import {
+  FunctionCallView,
+  isFunctionCallKind,
+} from "@/components/FunctionCallView";
 
 export function StatusBadge({ status }: { status: ProposalStatus }) {
   switch (status) {
@@ -232,24 +236,55 @@ export function ProposalCard({
         )}
 
         {detailed ? (
-          <div className="space-y-1">
-            <p className="text-[13px] font-medium text-muted-foreground">Kind</p>
-            <pre className="max-h-[32rem] overflow-auto rounded-md border bg-muted/30 p-2 text-[11px] leading-snug">
-              {JSON.stringify(proposal.kind, null, 2)}
-            </pre>
+          <div className="space-y-2">
+            <p className="text-[13px] font-medium text-muted-foreground">
+              Kind
+            </p>
+            {isFunctionCallKind(proposal.kind) ? (
+              <>
+                <FunctionCallView kind={proposal.kind} />
+                <details className="group">
+                  <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
+                    Raw JSON
+                  </summary>
+                  <pre className="mt-2 max-h-[32rem] overflow-auto rounded-md border bg-muted/30 p-2 text-[11px] leading-snug">
+                    {JSON.stringify(proposal.kind, null, 2)}
+                  </pre>
+                </details>
+              </>
+            ) : (
+              <pre className="max-h-[32rem] overflow-auto rounded-md border bg-muted/30 p-2 text-[11px] leading-snug">
+                {JSON.stringify(proposal.kind, null, 2)}
+              </pre>
+            )}
           </div>
         ) : (
           <details
             className={
-              "group" + (linkToDetail ? " relative z-10 w-fit" : "")
+              "group space-y-2" +
+              (linkToDetail ? " relative z-10" : "")
             }
           >
-            <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
+            <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground w-fit">
               Details
             </summary>
-            <pre className="mt-2 max-h-64 overflow-auto rounded-md border bg-muted/30 p-2 text-[11px] leading-snug">
-              {JSON.stringify(proposal.kind, null, 2)}
-            </pre>
+            {isFunctionCallKind(proposal.kind) ? (
+              <div className="pt-2 space-y-2">
+                <FunctionCallView kind={proposal.kind} />
+                <details className="group">
+                  <summary className="cursor-pointer text-[11px] text-muted-foreground hover:text-foreground">
+                    Raw JSON
+                  </summary>
+                  <pre className="mt-2 max-h-64 overflow-auto rounded-md border bg-muted/30 p-2 text-[11px] leading-snug">
+                    {JSON.stringify(proposal.kind, null, 2)}
+                  </pre>
+                </details>
+              </div>
+            ) : (
+              <pre className="mt-2 max-h-64 overflow-auto rounded-md border bg-muted/30 p-2 text-[11px] leading-snug">
+                {JSON.stringify(proposal.kind, null, 2)}
+              </pre>
+            )}
           </details>
         )}
 

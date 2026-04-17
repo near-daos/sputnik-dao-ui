@@ -48,7 +48,10 @@ export function parseTGasToGasUnits(tgas: string): string {
   return combined || "0";
 }
 
-export function formatGasUnitsAsTGas(gasUnits: string, maxFracDigits = 3): string {
+export function formatGasUnitsAsTGas(
+  gasUnits: string,
+  maxFracDigits = 3,
+): string {
   if (!gasUnits) return "0";
   const padded = gasUnits.padStart(TGAS_DECIMALS + 1, "0");
   const intPart =
@@ -71,15 +74,24 @@ export function base64EncodeUtf8(text: string): string {
   return btoa(binary);
 }
 
+/**
+ * Decode a base64 string to UTF-8 text. Strict: returns null if the input
+ * isn't valid base64 or if the decoded bytes aren't valid UTF-8 (e.g. a
+ * Borsh-serialized binary payload). Callers that want to show FunctionCall
+ * args rely on the null to classify the payload as "binary — kept as
+ * base64"; the wizard's round-trip (kindToWizard) already handles null by
+ * falling back to the raw base64 string.
+ */
 export function base64DecodeUtf8(b64: string): string | null {
   try {
     if (typeof window === "undefined") {
-      return Buffer.from(b64, "base64").toString("utf8");
+      const buf = Buffer.from(b64, "base64");
+      return new TextDecoder("utf-8", { fatal: true }).decode(buf);
     }
     const binary = atob(b64);
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    return new TextDecoder().decode(bytes);
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
   } catch {
     return null;
   }
