@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProposals, useLastProposalId } from "@/hooks/useDao";
 import { ProposalCard } from "@/components/ProposalCard";
+import type { Policy } from "@/lib/sputnik";
 
 const PAGE_SIZE = 25;
 
@@ -27,11 +28,11 @@ function ProposalRowSkeleton() {
 export function ProposalList({
   daoId,
   connectedAccount,
-  canVote,
+  policy,
 }: {
   daoId: string;
   connectedAccount: string | null;
-  canVote: boolean;
+  policy: Policy | null;
 }) {
   const [pageStart, setPageStart] = useState(0);
 
@@ -97,7 +98,7 @@ export function ProposalList({
               daoId={daoId}
               proposal={p}
               connectedAccount={connectedAccount}
-              canVote={canVote}
+              policy={policy}
               linkToDetail
             />
           ))}

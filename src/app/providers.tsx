@@ -8,6 +8,7 @@ import {
   createMainnetClient,
   NearProvider,
 } from "react-near-ts";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const nearStore = createNearStore({
   networkId: "mainnet",
@@ -23,7 +24,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
       enableSystem
       disableTransitionOnChange
     >
-      <NearProvider nearStore={nearStore}>{children}</NearProvider>
+      <NearProvider nearStore={nearStore}>
+        <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
+      </NearProvider>
     </ThemeProvider>
   );
 }

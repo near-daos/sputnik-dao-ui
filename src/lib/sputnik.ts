@@ -85,3 +85,95 @@ export function getUserRoles(policy: Policy, accountId: string): string[] {
   }
   return roles;
 }
+
+// Map a ProposalKind JSON variant to the policy label the contract uses in
+// permission strings (matches ProposalKind::to_policy_label in sputnikdao2).
+const POLICY_LABELS: Record<string, string> = {
+  ChangeConfig: "config",
+  ChangePolicy: "policy",
+  AddMemberToRole: "add_member_to_role",
+  RemoveMemberFromRole: "remove_member_from_role",
+  FunctionCall: "call",
+  UpgradeSelf: "upgrade_self",
+  UpgradeRemote: "upgrade_remote",
+  Transfer: "transfer",
+  SetStakingContract: "set_vote_token",
+  AddBounty: "add_bounty",
+  BountyDone: "bounty_done",
+  Vote: "vote",
+  FactoryInfoUpdate: "factory_info_update",
+  ChangePolicyAddOrUpdateRole: "policy_add_or_update_role",
+  ChangePolicyRemoveRole: "policy_remove_role",
+  ChangePolicyUpdateDefaultVotePolicy: "policy_update_default_vote_policy",
+  ChangePolicyUpdateParameters: "policy_update_parameters",
+};
+
+export function proposalKindPolicyLabel(kind: unknown): string | null {
+  const variant = proposalKindLabel(kind);
+  return POLICY_LABELS[variant] ?? null;
+}
+
+function roleMatchesUser(
+  role: Policy["roles"][number],
+  accountId: string,
+): boolean {
+  if (role.kind === "Everyone") return true;
+  if (typeof role.kind === "object" && "Group" in role.kind) {
+    return role.kind.Group.includes(accountId);
+  }
+  // Member (balance-weighted) — we can't evaluate without reading the
+  // staking contract, so be conservative and treat as no-match.
+  return false;
+}
+
+function roleAllows(
+  role: Policy["roles"][number],
+  kindLabel: string,
+  action: string,
+): boolean {
+  const p = role.permissions;
+  return (
+    p.includes(`${kindLabel}:${action}`) ||
+    p.includes(`${kindLabel}:*`) ||
+    p.includes(`*:${action}`) ||
+    p.includes("*:*")
+  );
+}
+
+export type PolicyAction =
+  | "AddProposal"
+  | "VoteApprove"
+  | "VoteReject"
+  | "VoteRemove";
+
+export function canActOnProposalKind(
+  policy: Policy,
+  accountId: string | null,
+  kind: unknown,
+  action: PolicyAction,
+): boolean {
+  if (!accountId) return false;
+  const kindLabel = proposalKindPolicyLabel(kind);
+  if (!kindLabel) return false;
+  return policy.roles.some(
+    (role) =>
+      roleMatchesUser(role, accountId) && roleAllows(role, kindLabel, action),
+  );
+}
+
+export function canAddAnyProposal(
+  policy: Policy,
+  accountId: string | null,
+): boolean {
+  if (!accountId) return false;
+  return policy.roles.some((role) => {
+    if (!roleMatchesUser(role, accountId)) return false;
+    return role.permissions.some(
+      (p) =>
+        p === "*:*" ||
+        p === "*:AddProposal" ||
+        p.endsWith(":AddProposal") ||
+        p.endsWith(":*"),
+    );
+  });
+}

@@ -23,6 +23,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useAddProposal, useConfig } from "@/hooks/useDao";
 import { formatNearAmount } from "@/lib/near";
 import type { Policy } from "@/lib/sputnik";
@@ -36,10 +41,14 @@ export function CreateProposal({
   daoId,
   proposalBondYocto,
   policy,
+  disabled = false,
+  disabledTooltip = null,
 }: {
   daoId: string;
   proposalBondYocto: string;
   policy: Policy | null;
+  disabled?: boolean;
+  disabledTooltip?: string | null;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -102,11 +111,32 @@ export function CreateProposal({
     return groups;
   }, [templates]);
 
+  const triggerButton = (
+    <Button size="sm" disabled={disabled}>
+      New proposal
+    </Button>
+  );
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm">New proposal</Button>
-      </DialogTrigger>
+      {disabled ? (
+        disabledTooltip ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span tabIndex={0} className="inline-block">
+                {triggerButton}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs text-xs">
+              {disabledTooltip}
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          triggerButton
+        )
+      ) : (
+        <DialogTrigger asChild>{triggerButton}</DialogTrigger>
+      )}
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create proposal</DialogTitle>
