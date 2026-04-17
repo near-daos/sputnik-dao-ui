@@ -9,6 +9,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useActProposal } from "@/hooks/useDao";
 import {
   canActOnProposalKind,
+  effectiveProposalStatus,
+  proposalDeadlineNs,
   proposalKindLabel,
   type Policy,
   type Proposal,
@@ -90,7 +92,13 @@ export function ProposalCard({
   const totals = voteTotals(proposal);
   const myVote = connectedAccount ? proposal.votes[connectedAccount] : null;
   const kindName = proposalKindLabel(proposal.kind);
-  const isInProgress = proposal.status === "InProgress";
+  const effectiveStatus = effectiveProposalStatus(proposal, policy);
+  const isInProgress = effectiveStatus === "InProgress";
+  const deadlineNs = proposalDeadlineNs(proposal, policy);
+  const deadlineLabel =
+    deadlineNs !== null ? formatTimestampNs(deadlineNs.toString()) : null;
+  const awaitingFinalize =
+    proposal.status === "InProgress" && effectiveStatus === "Expired";
 
   type VoteButtonState =
     | { kind: "hidden" }
@@ -100,9 +108,23 @@ export function ProposalCard({
   const voteButtonState = (action: "VoteApprove" | "VoteReject"): VoteButtonState => {
     if (myVote) return { kind: "hidden" };
     if (!isInProgress) {
+      if (effectiveStatus === "Expired" && awaitingFinalize) {
+        return {
+          kind: "disabled",
+          tooltip: deadlineLabel
+            ? `Voting period ended ${deadlineLabel}. This proposal has expired and is waiting for a Finalize call.`
+            : "The voting period has ended. This proposal has expired and is waiting for a Finalize call.",
+        };
+      }
+      if (effectiveStatus === "Expired") {
+        return {
+          kind: "disabled",
+          tooltip: "Voting is closed — this proposal expired.",
+        };
+      }
       return {
         kind: "disabled",
-        tooltip: `Voting is closed — this proposal is ${proposal.status}.`,
+        tooltip: `Voting is closed — this proposal is ${effectiveStatus}.`,
       };
     }
     if (!connectedAccount) {
@@ -135,30 +157,52 @@ export function ProposalCard({
   const showVoteButtons =
     approveState.kind !== "hidden" || rejectState.kind !== "hidden";
 
-  const idLabel = (
+  const idLabel = linkToDetail ? (
+    // "Stretched link" — the ::after overlay covers the whole relative
+    // parent <Card>, making the entire card clickable. Siblings of this
+    // link (badges, buttons, <details>, description links) paint on top
+    // because they come later in DOM order at the same z-index, so their
+    // own click handlers still work.
+    <Link
+      href={`/${daoId}/${proposal.id}`}
+      className="text-sm font-medium hover:underline after:absolute after:inset-0 after:rounded-xl after:content-['']"
+    >
+      #{proposal.id}
+    </Link>
+  ) : (
     <span className="text-sm font-medium">#{proposal.id}</span>
   );
 
   return (
-    <Card>
-      <CardContent className="p-4 space-y-3">
+    <Card
+      className={
+        linkToDetail
+          ? "relative transition-colors hover:bg-muted/40"
+          : undefined
+      }
+    >
+      <CardContent
+        className={
+          (linkToDetail ? "px-4 py-3 " : "p-4 ") + "space-y-3"
+        }
+      >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
-              {linkToDetail ? (
-                <Link
-                  href={`/${daoId}/${proposal.id}`}
-                  className="hover:underline"
-                >
-                  {idLabel}
-                </Link>
-              ) : (
-                idLabel
-              )}
+              {idLabel}
               <Badge variant="outline" className="text-[10px]">
                 {kindName}
               </Badge>
-              <StatusBadge status={proposal.status} />
+              <StatusBadge status={effectiveStatus} />
+              {awaitingFinalize && (
+                <Badge
+                  variant="outline"
+                  className="text-[10px] bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20"
+                  title="On-chain status is still InProgress; the contract flips to Expired once someone calls act_proposal(Finalize)."
+                >
+                  awaiting finalize
+                </Badge>
+              )}
             </div>
             <p className="text-xs text-muted-foreground break-all">
               by{" "}
@@ -166,12 +210,25 @@ export function ProposalCard({
                 {detailed ? proposal.proposer : shortenAccount(proposal.proposer)}
               </span>{" "}
               · {formatTimestampNs(proposal.submission_time)}
+              {detailed && deadlineLabel && (
+                <>
+                  {" · "}
+                  <span>
+                    {isInProgress ? "voting ends " : "voting ended "}
+                    {deadlineLabel}
+                  </span>
+                </>
+              )}
             </p>
           </div>
         </div>
 
         {proposal.description && (
-          <ProposalDescription text={proposal.description} daoId={daoId} />
+          <ProposalDescription
+            text={proposal.description}
+            daoId={daoId}
+            className={linkToDetail ? "relative z-10" : undefined}
+          />
         )}
 
         {detailed ? (
@@ -182,7 +239,11 @@ export function ProposalCard({
             </pre>
           </div>
         ) : (
-          <details className="group">
+          <details
+            className={
+              "group" + (linkToDetail ? " relative z-10 w-fit" : "")
+            }
+          >
             <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
               Details
             </summary>
@@ -239,7 +300,11 @@ export function ProposalCard({
           </div>
 
           {showVoteButtons && (
-            <div className="flex gap-2">
+            <div
+              className={
+                "flex gap-2" + (linkToDetail ? " relative z-10" : "")
+              }
+            >
               {approveState.kind !== "hidden" && (
                 <ActionButton
                   onClick={() => onVote("VoteApprove")}
