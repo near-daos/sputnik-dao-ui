@@ -15,6 +15,7 @@ import {
   type VoteValue,
 } from "@/lib/sputnik";
 import { formatTimestampNs, shortenAccount } from "@/lib/near";
+import { ProposalDescription } from "@/components/ProposalDescription";
 
 export function StatusBadge({ status }: { status: ProposalStatus }) {
   switch (status) {
@@ -124,9 +125,7 @@ export function ProposalCard({
         </div>
 
         {proposal.description && (
-          <p className="text-sm whitespace-pre-wrap break-words">
-            {proposal.description}
-          </p>
+          <ProposalDescription text={proposal.description} daoId={daoId} />
         )}
 
         {detailed ? (
