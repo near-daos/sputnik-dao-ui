@@ -74,6 +74,55 @@ export function proposalKindLabel(kind: unknown): string {
   return String(kind);
 }
 
+/**
+ * Proposals on-chain remain `InProgress` until someone calls `Finalize` or
+ * a quorum is reached. Once `submission_time + policy.proposal_period` is in
+ * the past, the proposal is effectively expired — vote actions will fail and
+ * the UI should say so. Returns null if we can't evaluate (policy not loaded).
+ */
+export function proposalDeadlineNs(
+  proposal: Proposal,
+  policy: Policy | null,
+): bigint | null {
+  if (!policy) return null;
+  try {
+    return BigInt(proposal.submission_time) + BigInt(policy.proposal_period);
+  } catch {
+    return null;
+  }
+}
+
+export function isProposalPastDeadline(
+  proposal: Proposal,
+  policy: Policy | null,
+  nowMs: number = Date.now(),
+): boolean {
+  const deadline = proposalDeadlineNs(proposal, policy);
+  if (deadline === null) return false;
+  const nowNs = BigInt(nowMs) * BigInt(1_000_000);
+  return nowNs > deadline;
+}
+
+/**
+ * Returns the status the UI should present. Mirrors the contract's own
+ * `Policy::proposal_status` logic: an `InProgress` proposal whose voting
+ * period has elapsed is "Expired" in every user-visible sense — even if the
+ * on-chain status hasn't flipped yet because no one has called `Finalize`.
+ */
+export function effectiveProposalStatus(
+  proposal: Proposal,
+  policy: Policy | null,
+  nowMs: number = Date.now(),
+): ProposalStatus {
+  if (
+    proposal.status === "InProgress" &&
+    isProposalPastDeadline(proposal, policy, nowMs)
+  ) {
+    return "Expired";
+  }
+  return proposal.status;
+}
+
 export function getUserRoles(policy: Policy, accountId: string): string[] {
   const roles: string[] = [];
   for (const role of policy.roles) {
